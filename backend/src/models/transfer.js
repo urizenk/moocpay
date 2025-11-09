@@ -43,57 +43,59 @@ const Transfer = {
       senderName: data.senderName || '张三',
       senderAvatar: data.senderAvatar || 'https://via.placeholder.com/50x50?text=张三',
       message: data.message || '恭喜发财，大吉大利',
-      status: data.status || 'pending',
+      status: data.status || 'pending', // pending: 待收款, received: 已收款, expired: 已过期
+      accountStatus: data.accountStatus || 'available', // available: 可用, frozen: 冻结
+      theme: data.theme || 'classic', // classic: 经典转账, redpacket: 红包, business: 企业, payment: 收款码, wallet: 零钱通, reward: 活动奖励
       receiverOpenId: data.receiverOpenId || null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    
+
     transfers.push(newTransfer);
     await saveTransfers(transfers);
-    
+
     return newTransfer;
   },
-  
+
   // 根据ID获取转账记录
   getById: async (id) => {
     const transfers = await readTransfers();
     return transfers.find(t => t.id === id) || null;
   },
-  
+
   // 更新转账记录
   update: async (id, data) => {
     const transfers = await readTransfers();
     const index = transfers.findIndex(t => t.id === id);
-    
+
     if (index === -1) {
       return null;
     }
-    
+
     transfers[index] = {
       ...transfers[index],
       ...data,
       updatedAt: new Date().toISOString()
     };
-    
+
     await saveTransfers(transfers);
     return transfers[index];
   },
-  
+
   // 删除转账记录
   delete: async (id) => {
     const transfers = await readTransfers();
     const index = transfers.findIndex(t => t.id === id);
-    
+
     if (index === -1) {
       return false;
     }
-    
+
     transfers.splice(index, 1);
     await saveTransfers(transfers);
     return true;
   },
-  
+
   // 获取所有转账记录
   getAll: async () => {
     return await readTransfers();

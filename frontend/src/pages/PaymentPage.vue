@@ -61,6 +61,8 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { ensureOpenIdForPayment, getWechatOpenId, isWechatBrowser } from '@/utils/wechatAuth'
+import axios from 'axios'
 
 export default {
   name: 'PaymentPage',
@@ -70,6 +72,7 @@ export default {
     
     // 页面状态
     const paymentLoading = ref(false)
+    const userOpenId = ref(null) // 用户的 OpenID
     const transferData = ref({
       id: '',
       displayName: '100.00元',
@@ -84,10 +87,13 @@ export default {
     const fetchTransferInfo = async () => {
       try {
         const { id } = route.params
-        const response = await fetch(`/api/transfers/${id}`)
+        const response = await axios.get(`/api/transfers/${id}`)
         
-        if (response.ok) {
-          const data = await response.json()
+        // 适配新的API响应格式
+        const isSuccess = response.data?.success ?? response.data?.id
+        const data = response.data?.data ?? response.data
+        
+        if (isSuccess && data) {
           transferData.value = {
             ...transferData.value,
             ...data
@@ -103,27 +109,60 @@ export default {
       }
     }
     
+    // 初始化 OpenID
+    const initOpenId = async () => {
+      try {
+        // 检查是否在微信浏览器中
+        if (!isWechatBrowser()) {
+          console.log('非微信浏览器，使用测试模式')
+          return
+        }
+        
+        // 获取 OpenID
+        const openid = await getWechatOpenId({
+          returnUrl: window.location.href,
+          scope: 'base' // 支付只需要静默授权
+        })
+        
+        if (openid) {
+          userOpenId.value = openid
+          console.log('OpenID 已获取:', openid)
+        } else {
+          console.log('正在跳转到微信授权页面...')
+        }
+      } catch (error) {
+        console.error('初始化OpenID失败:', error)
+      }
+    }
+    
     // 处理支付
     const handlePayment = async () => {
       if (!transferData.value.id) return
+      
+      // 检查是否在微信浏览器中
+      const isWechat = isWechatBrowser()
+      
+      // 如果在微信浏览器中，确保已获取 OpenID
+      if (isWechat && !userOpenId.value) {
+        alert('正在获取授权，请稍候...')
+        await initOpenId()
+        return // 会跳转到授权页面
+      }
       
       paymentLoading.value = true
       
       try {
         // 调用后端API创建支付订单
-        const response = await fetch('/api/payment/create', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            transferId: transferData.value.id,
-            amount: transferData.value.actualAmount,
-            description: `向${transferData.value.senderName}转账`
-          })
+        const response = await axios.post('/api/payment/create', {
+          transferId: transferData.value.id,
+          amount: transferData.value.actualAmount,
+          description: `向${transferData.value.senderName}转账`,
+          openid: userOpenId.value // 传递 OpenID
+        }, {
+          withCredentials: true // 携带 cookie
         })
         
-        const result = await response.json()
+        const result = response.data
         
         if (result.success) {
           // 更新转账状态为处理中
@@ -187,33 +226,26 @@ export default {
     const simulatePayment = async () => {
       try {
         // 创建支付订单
-        const createResponse = await fetch('/api/payment/create', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            transferId: transferData.value.id,
-            amount: transferData.value.actualAmount,
-            description: `向${transferData.value.senderName}转账`
-          })
+        const createResponse = await axios.post('/api/payment/create', {
+          transferId: transferData.value.id,
+          amount: transferData.value.actualAmount,
+          description: `向${transferData.value.senderName}转账`,
+          openid: userOpenId.value || 'test_openid' // 测试环境使用默认值
+        }, {
+          withCredentials: true
         })
         
-        const createResult = await createResponse.json()
+        const createResult = createResponse.data
         
         if (createResult.success) {
           // 调用模拟支付成功接口
-          const mockResponse = await fetch('/api/payment/mock-success', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              paymentId: createResult.data.paymentId
-            })
+          const mockResponse = await axios.post('/api/payment/mock-success', {
+            paymentId: createResult.data.paymentId
+          }, {
+            withCredentials: true
           })
           
-          const mockResult = await mockResponse.json()
+          const mockResult = mockResponse.data
           
           if (mockResult.success) {
             handlePaymentSuccess()
@@ -248,13 +280,10 @@ export default {
     // 更新转账状态
     const updateTransferStatus = async (status) => {
       try {
-        await fetch(`/api/transfers/${transferData.value.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ status })
-        })
+        await axios.patch(`/api/transfers/${transferData.value.id}`, 
+          { status },
+          { withCredentials: true }
+        )
       } catch (error) {
         console.error('更新转账状态失败:', error)
       }
@@ -265,15 +294,20 @@ export default {
       router.push(`/receive/${transferData.value.id}`)
     }
     
-    onMounted(() => {
-      fetchTransferInfo()
+    onMounted(async () => {
+      await fetchTransferInfo()
+      // 如果在微信浏览器中，初始化 OpenID
+      if (isWechatBrowser()) {
+        await initOpenId()
+      }
     })
     
     return {
       paymentLoading,
       transferData,
       handlePayment,
-      goBack
+      goBack,
+      userOpenId
     }
   }
 }
@@ -283,8 +317,11 @@ export default {
 .payment-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
   background-color: #f5f5f5;
+  position: relative;
+  overflow-x: hidden;
 }
 
 .payment-header {
@@ -372,7 +409,7 @@ export default {
 .amount-value {
   font-size: 18px;
   font-weight: bold;
-  color: #1aad19;
+  color: #ff6034;
 }
 
 .payment-notice {
@@ -405,26 +442,28 @@ export default {
 .payment-button {
   width: 100%;
   padding: 15px;
-  background-color: #1aad19;
+  background: linear-gradient(135deg, #ff8a3d 0%, #ff6034 100%);
   color: #fff;
   border: none;
-  border-radius: 5px;
-  font-size: 16px;
+  border-radius: 8px;
+  font-size: 17px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(255, 106, 52, 0.3);
 }
 
 .payment-button:hover {
-  background-color: #179b16;
+  background: linear-gradient(135deg, #ff7a2d 0%, #ff5024 100%);
 }
 
 .payment-button:active {
-  background-color: #158a15;
+  transform: scale(0.98);
 }
 
 .payment-button:disabled {
-  background-color: #9ed99e;
+  background: #c8c9cc;
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -446,12 +485,85 @@ export default {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background-color: #1aad19;
+  background-color: #ff6034;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
   font-size: 10px;
+}
+
+/* 移动端响应式适配 */
+
+/* 小屏幕适配 */
+@media (max-width: 375px) {
+  .payment-content {
+    padding: 16px;
+  }
+  
+  .payment-card {
+    margin-bottom: 20px;
+  }
+  
+  .payment-button {
+    padding: 13px;
+    font-size: 16px;
+  }
+}
+
+/* 超小屏幕适配 */
+@media (max-width: 320px) {
+  .payment-content {
+    padding: 12px;
+  }
+  
+  .payment-title {
+    font-size: 17px;
+  }
+  
+  .info-label,
+  .info-value {
+    font-size: 15px;
+  }
+}
+
+/* 大屏幕适配 */
+@media (min-width: 414px) {
+  .payment-button {
+    padding: 16px;
+    font-size: 18px;
+  }
+  
+  .amount-value {
+    font-size: 20px;
+  }
+}
+
+/* 平板适配 */
+@media (min-width: 768px) {
+  .payment-container {
+    max-width: 414px;
+    margin: 0 auto;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* 安全区域适配 */
+@supports (padding: max(0px)) {
+  .payment-header {
+    padding-top: max(0px, env(safe-area-inset-top));
+    height: max(44px, calc(44px + env(safe-area-inset-top)));
+  }
+  
+  .payment-footer {
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+}
+
+/* 触摸优化 */
+.payment-button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 </style>

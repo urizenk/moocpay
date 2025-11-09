@@ -20,15 +20,28 @@
       </div>
       
       <div class="amount-info">
-        <div class="amount-label">收款金额</div>
+        <div class="amount-label">转账通知</div>
+        <div class="notify-text">向你转账</div>
         <div class="amount-display">
           <span class="currency-symbol">¥</span>
-          <span class="amount-value">{{ transferData.amount }}</span>
+          <span class="amount-value">{{ transferData.actualAmount ? transferData.actualAmount.toFixed(2) : '0.00' }}</span>
         </div>
         
-        <div class="actual-amount-info">
-          <div class="actual-amount-label">实际支付金额</div>
-          <div class="actual-amount-value">¥{{ transferData.actualAmount.toFixed(2) }}</div>
+        <div class="transfer-details-box">
+          <div class="detail-row">
+            <span class="label">转账类型</span>
+            <span class="value orange">活动奖励</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">转账备注</span>
+            <span class="value">{{ transferData.message || '- -' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">收款方式</span>
+            <span class="value">
+              <span class="coin-icon">🪙</span> 零钱
+            </span>
+          </div>
         </div>
       </div>
       
@@ -188,8 +201,11 @@ export default {
 .success-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
   background-color: #f5f5f5;
+  position: relative;
+  overflow-x: hidden;
 }
 
 .success-header {
@@ -211,12 +227,13 @@ export default {
 .checkmark-circle {
   width: 80px;
   height: 80px;
-  background-color: #1aad19;
+  background: linear-gradient(135deg, #ff8a3d 0%, #ff6034 100%);
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  box-shadow: 0 4px 12px rgba(255, 106, 52, 0.3);
 }
 
 .checkmark {
@@ -253,9 +270,15 @@ export default {
 }
 
 .amount-label {
-  font-size: 14px;
+  font-size: 12px;
   color: #888;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
+}
+
+.notify-text {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 16px;
 }
 
 .amount-display {
@@ -294,8 +317,42 @@ export default {
 
 .actual-amount-value {
   font-size: 16px;
-  color: #1aad19;
+  color: #ff6034;
   font-weight: 500;
+}
+
+.transfer-details-box {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.detail-row .label {
+  color: #888;
+}
+
+.detail-row .value {
+  color: #333;
+}
+
+.detail-row .value.orange {
+  color: #ff6034;
+}
+
+.coin-icon {
+  font-size: 16px;
 }
 
 .transfer-details {
@@ -338,5 +395,124 @@ export default {
 
 .action-button {
   margin-bottom: 0;
+}
+
+/* 移动端响应式适配 */
+
+/* 小屏幕适配 */
+@media (max-width: 375px) {
+  .success-content {
+    padding: 24px 16px;
+  }
+  
+  .checkmark-circle {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .message-title {
+    font-size: 20px;
+  }
+  
+  .amount-value {
+    font-size: 32px;
+  }
+  
+  .currency-symbol {
+    font-size: 22px;
+  }
+}
+
+/* 超小屏幕适配 */
+@media (max-width: 320px) {
+  .success-content {
+    padding: 20px 12px;
+  }
+  
+  .checkmark-circle {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .checkmark {
+    width: 20px;
+    height: 35px;
+  }
+  
+  .message-title {
+    font-size: 18px;
+  }
+  
+  .amount-value {
+    font-size: 28px;
+  }
+  
+  .detail-row {
+    font-size: 13px;
+  }
+}
+
+/* 大屏幕适配 */
+@media (min-width: 414px) {
+  .checkmark-circle {
+    width: 90px;
+    height: 90px;
+  }
+  
+  .message-title {
+    font-size: 24px;
+  }
+  
+  .amount-value {
+    font-size: 40px;
+  }
+}
+
+/* 横屏适配 */
+@media (orientation: landscape) and (max-height: 500px) {
+  .success-content {
+    padding: 20px;
+  }
+  
+  .success-icon {
+    margin-bottom: 12px;
+  }
+  
+  .success-message {
+    margin-bottom: 20px;
+  }
+  
+  .amount-info,
+  .transfer-details {
+    margin-bottom: 16px;
+  }
+}
+
+/* 平板适配 */
+@media (min-width: 768px) {
+  .success-container {
+    max-width: 414px;
+    margin: 0 auto;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* 安全区域适配 */
+@supports (padding: max(0px)) {
+  .success-header {
+    padding-top: max(0px, env(safe-area-inset-top));
+    height: max(44px, calc(44px + env(safe-area-inset-top)));
+  }
+  
+  .action-buttons {
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+}
+
+/* 触摸优化 */
+.action-button :deep(.van-button) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  min-height: 44px;
 }
 </style>

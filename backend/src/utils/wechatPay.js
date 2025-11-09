@@ -3,10 +3,11 @@ const axios = require('axios');
 
 class WechatPay {
   constructor(appId, mchId, apiKey, notifyUrl) {
-    this.appId = appId;
-    this.mchId = mchId;
-    this.apiKey = apiKey;
-    this.notifyUrl = notifyUrl;
+    // 从环境变量或参数获取配置
+    this.appId = appId || process.env.WECHAT_APP_ID;
+    this.mchId = mchId || process.env.WECHAT_MCH_ID;
+    this.apiKey = apiKey || process.env.WECHAT_API_KEY;
+    this.notifyUrl = notifyUrl || process.env.WECHAT_NOTIFY_URL;
     this.apiUrl = 'https://api.mch.weixin.qq.com';
   }
 
@@ -56,24 +57,37 @@ class WechatPay {
    */
   async createOrder(order) {
     const {
-      outTradeNo,      // 商户订单号
-      totalFee,        // 总金额，单位为分
+      out_trade_no,    // 商户订单号
+      outTradeNo,      // 兼容旧版参数名
+      total_fee,       // 总金额，单位为分
+      totalFee,        // 兼容旧版参数名
       body,            // 商品描述
-      tradeType = 'JSAPI', // 交易类型
+      trade_type = 'JSAPI', // 交易类型
+      tradeType = 'JSAPI',  // 兼容旧版参数名
       openid,          // 用户openid
-      spbillCreateIp = '127.0.0.1' // 终端IP
+      spbill_create_ip = '127.0.0.1', // 终端IP
+      spbillCreateIp = '127.0.0.1',   // 兼容旧版参数名
+      notify_url,      // 回调URL
+      notifyUrl        // 兼容旧版参数名
     } = order;
+
+    // 使用统一的参数名（优先使用下划线格式）
+    const orderNo = out_trade_no || outTradeNo;
+    const orderFee = total_fee || totalFee;
+    const orderType = trade_type || tradeType;
+    const orderIp = spbill_create_ip || spbillCreateIp;
+    const orderNotifyUrl = notify_url || notifyUrl || this.notifyUrl;
 
     const params = {
       appid: this.appId,
       mch_id: this.mchId,
       nonce_str: this.generateNonceStr(),
       body,
-      out_trade_no: outTradeNo,
-      total_fee: totalFee,
-      spbill_create_ip: spbillCreateIp,
-      notify_url: this.notifyUrl,
-      trade_type: tradeType,
+      out_trade_no: orderNo,
+      total_fee: orderFee,
+      spbill_create_ip: orderIp,
+      notify_url: orderNotifyUrl,
+      trade_type: orderType,
       openid
     };
 
@@ -90,29 +104,14 @@ class WechatPay {
 
       const result = this.xmlToObject(response.data);
       
-      if (result.return_code === 'SUCCESS' && result.result_code === 'SUCCESS') {
-        // 生成JSAPI支付参数
-        const payParams = {
-          appId: this.appId,
-          timeStamp: Math.floor(Date.now() / 1000).toString(),
-          nonceStr: this.generateNonceStr(),
-          package: `prepay_id=${result.prepay_id}`,
-          signType: 'MD5'
-        };
-        
-        payParams.paySign = this.generateSign(payParams);
-        
-        return {
-          success: true,
-          prepayId: result.prepay_id,
-          payParams
-        };
-      } else {
-        return {
-          success: false,
-          error: result.return_msg || result.err_code_des || '创建订单失败'
-        };
-      }
+      // 返回完整结果，包含所有字段
+      return {
+        ...result,
+        return_code: result.return_code,
+        result_code: result.result_code,
+        prepay_id: result.prepay_id,
+        err_code_des: result.err_code_des
+      };
     } catch (error) {
       console.error('创建微信支付订单失败:', error);
       return {
@@ -170,6 +169,25 @@ class WechatPay {
   }
 
   /**
+   * 生成JSAPI支付参数
+   * @param {string} prepayId 预支付ID
+   * @returns {Object} JSAPI支付参数
+   */
+  generateJSAPIParams(prepayId) {
+    const payParams = {
+      appId: this.appId,
+      timeStamp: Math.floor(Date.now() / 1000).toString(),
+      nonceStr: this.generateNonceStr(),
+      package: `prepay_id=${prepayId}`,
+      signType: 'MD5'
+    };
+    
+    payParams.paySign = this.generateSign(payParams);
+    
+    return payParams;
+  }
+
+  /**
    * 验证支付回调
    * @param {Object} params 回调参数
    * @returns {boolean} 验证结果
@@ -178,6 +196,18 @@ class WechatPay {
     const sign = params.sign;
     const calculatedSign = this.generateSign(params);
     return sign === calculatedSign;
+  }
+
+  /**
+   * 解析支付回调数据
+   * @param {string|Object} data 回调数据（XML字符串或已解析对象）
+   * @returns {Object} 解析后的对象
+   */
+  parseNotify(data) {
+    if (typeof data === 'string') {
+      return this.xmlToObject(data);
+    }
+    return data;
   }
 
   /**

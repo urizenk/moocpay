@@ -7,8 +7,19 @@ const Payment = require('../models/payment');
 // 创建支付订单
 router.post('/create', async (req, res) => {
   try {
-    const { transferId, amount, description } = req.body;
-    
+    const { transferId, amount, description, openid } = req.body;
+
+    // 优先使用前端传来的 openid，其次使用 session 中的 openid
+    const userOpenId = openid || req.session.wechatOpenId;
+
+    // 验证 OpenID（生产环境必须有）
+    if (!userOpenId && process.env.NODE_ENV === 'production') {
+      return res.json({
+        success: false,
+        message: '缺少用户OpenID，请先授权'
+      });
+    }
+
     // 验证转账是否存在
     const transfer = await Transfer.getById(transferId);
     if (!transfer) {
@@ -17,7 +28,7 @@ router.post('/create', async (req, res) => {
         message: '转账信息不存在'
       });
     }
-    
+
     // 创建支付记录
     const payment = await Payment.create({
       transferId,
@@ -25,22 +36,39 @@ router.post('/create', async (req, res) => {
       description,
       status: 'pending'
     });
-    
+
+    // 开发环境或测试环境，使用模拟支付
+    if (process.env.NODE_ENV === 'development' || !userOpenId) {
+      console.log('开发环境或无OpenID，使用模拟支付');
+      return res.json({
+        success: true,
+        data: {
+          paymentId: payment.id,
+          orderId: `DEV_${Date.now()}`,
+          paymentParams: {
+            // 模拟支付参数
+            mock: true,
+            paymentId: payment.id
+          }
+        }
+      });
+    }
+
     // 调用微信支付统一下单
     const wechatPay = new WechatPay();
     const orderId = `PAY${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
     const notifyUrl = `${process.env.SITE_URL}/api/payment/notify`;
-    
+
     const paymentResult = await wechatPay.createOrder({
       body: description,
       out_trade_no: orderId,
       total_fee: Math.round(amount * 100), // 转换为分
-      spbill_create_ip: req.ip,
+      spbill_create_ip: req.ip || '127.0.0.1',
       notify_url: notifyUrl,
       trade_type: 'JSAPI',
-      openid: transfer.receiverOpenId || 'test_openid' // 实际应用中需要获取用户的openid
+      openid: userOpenId // 使用真实的用户 OpenID
     });
-    
+
     if (paymentResult.return_code === 'SUCCESS' && paymentResult.result_code === 'SUCCESS') {
       // 更新支付记录
       await Payment.update(payment.id, {
@@ -48,10 +76,10 @@ router.post('/create', async (req, res) => {
         prepayId: paymentResult.prepay_id,
         status: 'created'
       });
-      
+
       // 生成JSAPI支付参数
       const paymentParams = wechatPay.generateJSAPIParams(paymentResult.prepay_id);
-      
+
       res.json({
         success: true,
         data: {
@@ -66,7 +94,7 @@ router.post('/create', async (req, res) => {
         status: 'failed',
         error: paymentResult.err_code_des || '支付订单创建失败'
       });
-      
+
       res.json({
         success: false,
         message: paymentResult.err_code_des || '支付订单创建失败'
@@ -85,7 +113,7 @@ router.post('/create', async (req, res) => {
 router.get('/status/:paymentId', async (req, res) => {
   try {
     const { paymentId } = req.params;
-    
+
     // 获取支付记录
     const payment = await Payment.getById(paymentId);
     if (!payment) {
@@ -94,15 +122,15 @@ router.get('/status/:paymentId', async (req, res) => {
         message: '支付记录不存在'
       });
     }
-    
+
     // 如果支付状态不是最终状态，查询微信支付状态
     if (payment.status === 'pending' || payment.status === 'created') {
       const wechatPay = new WechatPay();
       const queryResult = await wechatPay.queryOrder(payment.orderId);
-      
+
       if (queryResult.return_code === 'SUCCESS' && queryResult.result_code === 'SUCCESS') {
         const tradeState = queryResult.trade_state;
-        
+
         // 更新支付状态
         let newStatus = payment.status;
         if (tradeState === 'SUCCESS') {
@@ -116,14 +144,14 @@ router.get('/status/:paymentId', async (req, res) => {
         } else if (tradeState === 'PAYERROR') {
           newStatus = 'failed';
         }
-        
+
         if (newStatus !== payment.status) {
           await Payment.update(payment.id, { status: newStatus });
           payment.status = newStatus;
         }
       }
     }
-    
+
     res.json({
       success: true,
       data: {
@@ -142,21 +170,25 @@ router.get('/status/:paymentId', async (req, res) => {
   }
 });
 
-// 微信支付回调
-router.post('/notify', async (req, res) => {
+// 微信支付回调（需要处理XML格式）
+router.post('/notify', express.raw({ type: 'application/xml' }), async (req, res) => {
   try {
     const wechatPay = new WechatPay();
-    
+
+    // 将Buffer转换为字符串
+    const xmlData = req.body.toString();
+
+    // 解析XML数据
+    const notifyData = wechatPay.parseNotify(xmlData);
+
     // 验证签名
-    const isValid = wechatPay.verifyNotify(req.body);
+    const isValid = wechatPay.verifyNotify(notifyData);
     if (!isValid) {
       return res.send('<xml><return_code><![CDATA[FAIL]]></return_code><return_msg><![CDATA[签名验证失败]]></return_msg></xml>');
     }
-    
-    // 解析回调数据
-    const notifyData = wechatPay.parseNotify(req.body);
+
     const { out_trade_no, transaction_id, result_code } = notifyData;
-    
+
     if (result_code === 'SUCCESS') {
       // 支付成功，更新支付记录
       const payment = await Payment.getByOrderId(out_trade_no);
@@ -166,7 +198,7 @@ router.post('/notify', async (req, res) => {
           transactionId: transaction_id,
           paidAt: new Date()
         });
-        
+
         // 更新转账状态
         await Transfer.update(payment.transferId, {
           status: 'received',
@@ -174,7 +206,7 @@ router.post('/notify', async (req, res) => {
         });
       }
     }
-    
+
     // 返回成功响应
     res.send('<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>');
   } catch (error) {
@@ -187,7 +219,7 @@ router.post('/notify', async (req, res) => {
 router.post('/mock-success', async (req, res) => {
   try {
     const { paymentId } = req.body;
-    
+
     // 获取支付记录
     const payment = await Payment.getById(paymentId);
     if (!payment) {
@@ -196,20 +228,20 @@ router.post('/mock-success', async (req, res) => {
         message: '支付记录不存在'
       });
     }
-    
+
     // 更新支付状态为已支付
     await Payment.update(payment.id, {
       status: 'paid',
       transactionId: `MOCK_${Date.now()}`,
       paidAt: new Date()
     });
-    
+
     // 更新转账状态为已收款
     await Transfer.update(payment.transferId, {
       status: 'received',
       receivedAt: new Date()
     });
-    
+
     res.json({
       success: true,
       message: '模拟支付成功'

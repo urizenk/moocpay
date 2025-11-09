@@ -6,6 +6,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs').promises;
 const { v4: uuidv4 } = require('uuid');
+const session = require('express-session');
 
 // 导入数据模型
 const Transfer = require('./models/transfer');
@@ -21,12 +22,27 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // 中间件
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true // 允许携带 cookie
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Session 管理中间件
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // 生产环境使用 https
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000 // 24小时
+  }
+}));
+
 // 静态文件服务
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
+app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 
 // API路由
 app.use('/api/transfers', transferRoutes);
@@ -62,7 +78,7 @@ async function initDefaultSettings() {
       message: "恭喜发财，大吉大利",
       createdAt: new Date().toISOString()
     };
-    
+
     await fs.writeFile(settingsFile, JSON.stringify(defaultSettings, null, 2));
     console.log('已创建默认设置文件');
   }
@@ -73,7 +89,7 @@ async function startServer() {
   try {
     // 初始化数据目录和设置
     await initDefaultSettings();
-    
+
     // 启动服务器
     app.listen(PORT, () => {
       console.log(`服务器运行在 http://localhost:${PORT}`);
@@ -85,7 +101,7 @@ async function startServer() {
 
 // 处理前端路由
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
 });
 
 startServer();
