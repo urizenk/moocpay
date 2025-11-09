@@ -205,7 +205,7 @@ const viewRecord = (record) => {
       实际金额: ¥${record.actualAmount}\n
       留言: ${record.message || '无'}\n
       状态: ${getStatusText(record.status)}\n
-      创建时间: ${formatDateTime(record.createTime)}\n
+      创建时间: ${formatDateTime(record.createdAt)}\n
       ${record.receiveTime ? `收款时间: ${formatDateTime(record.receiveTime)}` : ''}
     `,
     showCancelButton: false

@@ -1,8 +1,11 @@
 <template>
   <div class="chat-container">
-    <div class="chat-header">
-      <div class="chat-title">微信转账</div>
-    </div>
+    <van-nav-bar
+      title="微信转账"
+      left-arrow
+      @click-left="goBack"
+      class="chat-header"
+    />
     
     <div class="chat-content">
       <div class="message-item sender-message">
@@ -11,7 +14,7 @@
         </div>
         <div class="message-content">
           <div class="sender-name">{{ transferData.senderName }}</div>
-          <div class="message-time">{{ formatTime(transferData.createTime) }}</div>
+          <div class="message-time">{{ formatTime(transferData.createdAt) }}</div>
           <div class="transfer-card" @click="goToReceivePage">
             <div class="card-header">
               <div class="icon-wrapper">
@@ -19,7 +22,7 @@
               </div>
               <div class="card-status">转账</div>
             </div>
-            <div class="card-amount">{{ transferData.displayName }}</div>
+            <div class="card-amount">{{ transferData.amount }}</div>
             <div class="card-message" v-if="transferData.message">{{ transferData.message }}</div>
           </div>
         </div>
@@ -38,10 +41,15 @@
       </div>
       
       <div class="action-buttons" v-if="transferData.status === 'pending'">
-        <div class="action-button" @click="goToSharePage">
-          <div class="button-icon">📤</div>
-          <div class="button-text">分享</div>
-        </div>
+        <van-button 
+          type="primary" 
+          round 
+          @click="goToSharePage"
+          class="share-button"
+          icon="share-o"
+        >
+          分享
+        </van-button>
       </div>
     </div>
     
@@ -60,29 +68,35 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { NavBar, Button } from 'vant'
+import axios from 'axios'
 
 export default {
   name: 'ChatCard',
+  components: {
+    [NavBar.name]: NavBar,
+    [Button.name]: Button
+  },
   setup() {
     const router = useRouter()
     const route = useRoute()
     
     const transferData = ref({
       id: '',
-      displayName: '100.00元',
+      amount: '100.00',
       actualAmount: 0.1,
       senderName: '张三',
       senderAvatar: 'https://via.placeholder.com/50x50?text=张三',
       message: '恭喜发财，大吉大利',
-      createTime: new Date(),
-      receiveTime: null,
+      createdAt: new Date(),
+      updatedAt: null,
       status: 'pending',
       paymentId: null
     })
     
     const formatTime = (date) => {
       const now = new Date()
-      const diff = now - date
+      const diff = now - new Date(date)
       const minutes = Math.floor(diff / 60000)
       
       if (minutes < 1) return '刚刚'
@@ -94,7 +108,11 @@ export default {
       const days = Math.floor(hours / 24)
       if (days < 7) return `${days}天前`
       
-      return date.toLocaleDateString()
+      return new Date(date).toLocaleDateString()
+    }
+    
+    const goBack = () => {
+      router.go(-1)
     }
     
     const goToReceivePage = () => {
@@ -113,14 +131,13 @@ export default {
       // 如果有路由参数，则获取对应的转账记录
       if (route.params.id) {
         try {
-          const response = await fetch(`/api/transfer/${route.params.id}`)
-          if (response.ok) {
-            const data = await response.json()
+          const response = await axios.get(`/api/transfers/${route.params.id}`)
+          if (response.data) {
             transferData.value = {
               ...transferData.value,
-              ...data,
-              createTime: new Date(data.createTime),
-              receiveTime: data.receiveTime ? new Date(data.receiveTime) : null
+              ...response.data,
+              createdAt: new Date(response.data.createdAt),
+              updatedAt: response.data.updatedAt ? new Date(response.data.updatedAt) : null
             }
           }
         } catch (error) {
@@ -129,18 +146,10 @@ export default {
       } else {
         // 否则创建一个新的转账记录
         try {
-          const response = await fetch('/api/transfer', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(transferData.value)
-          })
-          
-          if (response.ok) {
-            const data = await response.json()
-            transferData.value.id = data.id
-            transferData.value.createTime = new Date(data.createTime)
+          const response = await axios.post('/api/transfers', transferData.value)
+          if (response.data) {
+            transferData.value.id = response.data.id
+            transferData.value.createdAt = new Date(response.data.createdAt)
           }
         } catch (error) {
           console.error('创建转账记录失败:', error)
@@ -151,6 +160,7 @@ export default {
     return {
       transferData,
       formatTime,
+      goBack,
       goToReceivePage,
       goToSharePage
     }
@@ -167,29 +177,8 @@ export default {
 }
 
 .chat-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 44px;
   background-color: #ededed;
   border-bottom: 1px solid #dcdcdc;
-  position: relative;
-}
-
-.chat-header::before {
-  content: '';
-  position: absolute;
-  left: 10px;
-  width: 20px;
-  height: 20px;
-  background-color: #999;
-  -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>') no-repeat center;
-  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>') no-repeat center;
-}
-
-.chat-title {
-  font-size: 17px;
-  font-weight: 500;
 }
 
 .chat-content {
@@ -352,35 +341,8 @@ export default {
   color: #fff;
 }
 
-.action-buttons {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.action-button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 10px 20px;
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.action-button:active {
-  transform: scale(0.98);
-}
-
-.button-icon {
-  font-size: 24px;
-  margin-bottom: 5px;
-}
-
-.button-text {
-  font-size: 14px;
-  color: #333;
+.share-button {
+  margin: 20px auto;
+  width: 80%;
 }
 </style>

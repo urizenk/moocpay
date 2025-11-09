@@ -6,10 +6,16 @@ import AdminPage from './pages/AdminPage.vue'
 import SharePage from './pages/SharePage.vue'
 import TransferPage from './pages/TransferPage.vue'
 import PaymentPage from './pages/PaymentPage.vue'
+import WechatEntryPage from './pages/WechatEntryPage.vue'
 
 const routes = [
   {
     path: '/',
+    name: 'WechatEntry',
+    component: WechatEntryPage
+  },
+  {
+    path: '/chat',
     name: 'ChatCard',
     component: ChatCard
   },

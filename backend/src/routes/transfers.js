@@ -1,31 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const path = require('path');
-const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
 
-const dataDir = path.join(__dirname, '../../data');
-const transfersFile = path.join(dataDir, 'transfers.json');
+// 导入数据模型
+const Transfer = require('../models/transfer');
+const Payment = require('../models/payment');
 
 // 获取所有转账记录
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const size = parseInt(req.query.size) || 10;
     
-    if (!fs.existsSync(transfersFile)) {
-      return res.json({
-        success: true,
-        data: {
-          list: [],
-          total: 0,
-          page,
-          size
-        }
-      });
-    }
-    
-    const transfers = JSON.parse(fs.readFileSync(transfersFile, 'utf8'));
+    const transfers = await Transfer.getAll();
     const total = transfers.length;
     const startIndex = (page - 1) * size;
     const endIndex = startIndex + size;
@@ -47,16 +33,10 @@ router.get('/', (req, res) => {
 });
 
 // 获取单个转账记录
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    if (!fs.existsSync(transfersFile)) {
-      return res.status(404).json({ error: '转账记录不存在' });
-    }
-    
-    const transfers = JSON.parse(fs.readFileSync(transfersFile, 'utf8'));
-    const transfer = transfers.find(t => t.id === id);
+    const transfer = await Transfer.getById(id);
     
     if (!transfer) {
       return res.status(404).json({ error: '转账记录不存在' });
@@ -72,8 +52,8 @@ router.get('/:id', (req, res) => {
         senderName: transfer.senderName,
         senderAvatar: transfer.senderAvatar || '/default-avatar.png',
         message: transfer.message || '',
-        createTime: transfer.createTime,
-        receiveTime: transfer.receiveTime,
+        createTime: transfer.createdAt,
+        receiveTime: transfer.updatedAt,
         status: transfer.status,
         paymentId: transfer.paymentId
       }
@@ -85,7 +65,7 @@ router.get('/:id', (req, res) => {
 });
 
 // 创建新的转账记录
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { displayName, actualAmount, senderName, senderAvatar, message } = req.body;
     
@@ -96,31 +76,13 @@ router.post('/', (req, res) => {
       });
     }
     
-    // 确保数据目录和文件存在
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
-    }
-    
-    let transfers = [];
-    if (fs.existsSync(transfersFile)) {
-      transfers = JSON.parse(fs.readFileSync(transfersFile, 'utf8'));
-    }
-    
-    const newTransfer = {
-      id: uuidv4(),
+    const newTransfer = await Transfer.create({
       displayName,
       actualAmount: parseFloat(actualAmount),
       senderName,
       senderAvatar: senderAvatar || '/default-avatar.png',
-      message: message || '',
-      createTime: new Date().toISOString(),
-      receiveTime: null,
-      status: 'pending',
-      paymentId: null
-    };
-    
-    transfers.push(newTransfer);
-    fs.writeFileSync(transfersFile, JSON.stringify(transfers, null, 2));
+      message: message || ''
+    });
     
     res.status(201).json({
       success: true,
@@ -136,22 +98,13 @@ router.post('/', (req, res) => {
 });
 
 // 更新转账记录状态
-router.patch('/:id', (req, res) => {
+router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { status, paymentId } = req.body;
     
-    if (!fs.existsSync(transfersFile)) {
-      return res.status(404).json({ 
-        success: false, 
-        error: '转账记录不存在' 
-      });
-    }
-    
-    let transfers = JSON.parse(fs.readFileSync(transfersFile, 'utf8'));
-    const transferIndex = transfers.findIndex(t => t.id === id);
-    
-    if (transferIndex === -1) {
+    const transfer = await Transfer.getById(id);
+    if (!transfer) {
       return res.status(404).json({ 
         success: false, 
         error: '转账记录不存在' 
@@ -159,24 +112,25 @@ router.patch('/:id', (req, res) => {
     }
     
     // 更新转账记录
+    const updateData = {};
     if (status) {
-      transfers[transferIndex].status = status;
+      updateData.status = status;
     }
     
     if (paymentId) {
-      transfers[transferIndex].paymentId = paymentId;
+      updateData.paymentId = paymentId;
     }
     
     // 如果状态为已收款，更新收款时间
     if (status === 'received') {
-      transfers[transferIndex].receiveTime = new Date().toISOString();
+      updateData.receiveTime = new Date().toISOString();
     }
     
-    fs.writeFileSync(transfersFile, JSON.stringify(transfers, null, 2));
+    const updatedTransfer = await Transfer.update(id, updateData);
     
     res.json({
       success: true,
-      data: transfers[transferIndex]
+      data: updatedTransfer
     });
   } catch (error) {
     console.error('更新转账记录失败:', error);
@@ -188,29 +142,17 @@ router.patch('/:id', (req, res) => {
 });
 
 // 删除转账记录
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const success = await Transfer.delete(id);
     
-    if (!fs.existsSync(transfersFile)) {
+    if (!success) {
       return res.status(404).json({ 
         success: false, 
         error: '转账记录不存在' 
       });
     }
-    
-    let transfers = JSON.parse(fs.readFileSync(transfersFile, 'utf8'));
-    const transferIndex = transfers.findIndex(t => t.id === id);
-    
-    if (transferIndex === -1) {
-      return res.status(404).json({ 
-        success: false, 
-        error: '转账记录不存在' 
-      });
-    }
-    
-    transfers.splice(transferIndex, 1);
-    fs.writeFileSync(transfersFile, JSON.stringify(transfers, null, 2));
     
     res.json({ 
       success: true,

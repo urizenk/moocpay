@@ -4,43 +4,48 @@
       title="收款成功"
       left-arrow
       @click-left="goBack"
-      class="nav-bar"
+      class="success-header"
     />
     
     <div class="success-content">
       <div class="success-icon">
-        <div class="checkmark">
-          <div class="checkmark-stem"></div>
-          <div class="checkmark-kick"></div>
+        <div class="checkmark-circle">
+          <div class="checkmark"></div>
         </div>
       </div>
       
-      <div class="success-title">收款成功</div>
+      <div class="success-message">
+        <div class="message-title">收款成功</div>
+        <div class="message-subtitle">转账已成功到账</div>
+      </div>
+      
+      <div class="amount-info">
+        <div class="amount-label">收款金额</div>
+        <div class="amount-display">
+          <span class="currency-symbol">¥</span>
+          <span class="amount-value">{{ transferData.amount }}</span>
+        </div>
+        
+        <div class="actual-amount-info">
+          <div class="actual-amount-label">实际支付金额</div>
+          <div class="actual-amount-value">¥{{ transferData.actualAmount.toFixed(2) }}</div>
+        </div>
+      </div>
       
       <div class="transfer-details">
         <div class="detail-item">
-          <div class="detail-label">收款金额</div>
-          <div class="detail-value">{{ transferData.displayName }}</div>
-        </div>
-        
-        <div class="detail-item">
-          <div class="detail-label">实际金额</div>
-          <div class="detail-value actual-amount">¥{{ transferData.actualAmount.toFixed(2) }}</div>
-        </div>
-        
-        <div class="detail-item">
-          <div class="detail-label">付款方</div>
+          <div class="detail-label">转账人</div>
           <div class="detail-value">{{ transferData.senderName }}</div>
         </div>
         
         <div class="detail-item">
-          <div class="detail-label">创建时间</div>
-          <div class="detail-value">{{ formatDateTime(transferData.createTime) }}</div>
+          <div class="detail-label">转账时间</div>
+          <div class="detail-value">{{ formatDateTime(transferData.createdAt) }}</div>
         </div>
         
-        <div class="detail-item" v-if="transferData.receiveTime">
+        <div class="detail-item">
           <div class="detail-label">收款时间</div>
-          <div class="detail-value">{{ formatDateTime(transferData.receiveTime) }}</div>
+          <div class="detail-value">{{ formatDateTime(transferData.updatedAt) }}</div>
         </div>
         
         <div class="detail-item" v-if="transferData.message">
@@ -52,202 +57,264 @@
       <div class="action-buttons">
         <van-button 
           type="primary" 
-          size="large" 
-          round 
           block 
+          round 
           @click="goToChat"
+          class="action-button"
         >
           返回聊天
         </van-button>
         
         <van-button 
-          type="default" 
-          size="large" 
-          round 
+          plain 
           block 
-          @click="viewDetails"
-          class="details-button"
+          round 
+          @click="shareSuccess"
+          class="action-button"
         >
-          查看详情
+          分享收款成功
         </van-button>
-      </div>
-      
-      <div class="notice">
-        <div class="notice-title">温馨提示</div>
-        <div class="notice-content">
-          <p>1. 实际收款金额为0.1元，显示金额仅为演示效果</p>
-          <p>2. 如有疑问，请联系客服</p>
-        </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { showToast, showLoadingToast, closeToast } from 'vant';
-import axios from 'axios';
+<script>
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { NavBar, Button } from 'vant'
+import axios from 'axios'
 
-const route = useRoute();
-const router = useRouter();
-
-// 页面状态
-const loading = ref(true);
-const transfer = ref(null);
-
-// 获取转账信息
-const fetchTransferInfo = async () => {
-  try {
-    const { id } = route.params;
-    const response = await axios.get(`/api/transfers/${id}`);
+export default {
+  name: 'SuccessPage',
+  components: {
+    [NavBar.name]: NavBar,
+    [Button.name]: Button
+  },
+  setup() {
+    const router = useRouter()
+    const route = useRoute()
     
-    if (response.data.success) {
-      transfer.value = response.data.data;
-    } else {
-      showToast('转账信息不存在');
-      setTimeout(() => {
-        router.push('/');
-      }, 1500);
+    const transferData = ref({
+      id: '',
+      amount: '100.00',
+      actualAmount: 0.1,
+      senderName: '张三',
+      senderAvatar: 'https://via.placeholder.com/50x50?text=张三',
+      message: '恭喜发财，大吉大利',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      status: 'received',
+      paymentId: null
+    })
+    
+    const formatDateTime = (date) => {
+      if (!date) return ''
+      
+      const d = new Date(date)
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      const hours = String(d.getHours()).padStart(2, '0')
+      const minutes = String(d.getMinutes()).padStart(2, '0')
+      
+      return `${year}-${month}-${day} ${hours}:${minutes}`
     }
-  } catch (error) {
-    console.error('获取转账信息失败:', error);
-    showToast('获取转账信息失败');
-    setTimeout(() => {
-      router.push('/');
-    }, 1500);
-  } finally {
-    loading.value = false;
+    
+    const goBack = () => {
+      router.go(-1)
+    }
+    
+    const goToChat = () => {
+      router.push(`/chat/${transferData.value.id}`)
+    }
+    
+    const shareSuccess = () => {
+      // 实现分享功能
+      if (navigator.share) {
+        navigator.share({
+          title: '微信转账收款成功',
+          text: `我已成功收款¥${transferData.value.amount}`,
+          url: window.location.href
+        }).catch(err => {
+          console.log('分享失败:', err)
+        })
+      } else {
+        // 复制链接到剪贴板
+        navigator.clipboard.writeText(window.location.href).then(() => {
+          alert('链接已复制到剪贴板')
+        }).catch(err => {
+          console.error('复制失败:', err)
+          alert('复制失败，请手动复制链接')
+        })
+      }
+    }
+    
+    onMounted(async () => {
+      // 获取路由参数中的转账ID
+      if (route.params.id) {
+        try {
+          const response = await axios.get(`/api/transfers/${route.params.id}`)
+          if (response.data) {
+            transferData.value = {
+              ...transferData.value,
+              ...response.data,
+              createdAt: new Date(response.data.createdAt),
+              updatedAt: new Date(response.data.updatedAt)
+            }
+          }
+        } catch (error) {
+          console.error('获取转账记录失败:', error)
+          router.push('/')
+        }
+      } else {
+        // 如果没有ID，则返回首页
+        router.push('/')
+      }
+    })
+    
+    return {
+      transferData,
+      formatDateTime,
+      goBack,
+      goToChat,
+      shareSuccess
+    }
   }
-};
-
-// 格式化时间
-const formatTime = (dateString) => {
-  if (!dateString) return '';
-  return new Date(dateString).toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
-};
-
-// 返回聊天
-const goBack = () => {
-  router.push('/');
-};
-
-// 查看详情
-const viewDetails = () => {
-  router.push(`/transfer/${transfer.value.id}`);
-};
-
-onMounted(async () => {
-  await fetchTransferInfo();
-});
+}
 </script>
 
 <style scoped>
 .success-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
   background-color: #f5f5f5;
 }
 
-.nav-bar {
-  background-color: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+.success-header {
+  background-color: #ededed;
+  border-bottom: 1px solid #dcdcdc;
 }
 
 .success-content {
   flex: 1;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  padding: 30px 20px;
+  overflow-y: auto;
+  text-align: center;
 }
 
 .success-icon {
-  margin: 30px 0;
-  position: relative;
+  margin-bottom: 20px;
+}
+
+.checkmark-circle {
   width: 80px;
   height: 80px;
+  background-color: #1aad19;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .checkmark {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  display: block;
-  stroke-width: 2;
-  stroke: #07c160;
-  stroke-miterlimit: 10;
-  box-shadow: inset 0px 0px 0px #07c160;
-  animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
-  position: relative;
-}
-
-.checkmark::after {
-  content: '';
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  display: block;
-  background-color: #07c160;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: -1;
-}
-
-.checkmark-stem {
-  position: absolute;
-  width: 3px;
+  width: 25px;
   height: 40px;
-  background-color: #fff;
-  top: 20px;
-  left: 35px;
+  border-right: 5px solid #fff;
+  border-bottom: 5px solid #fff;
   transform: rotate(45deg);
+  margin-top: -10px;
 }
 
-.checkmark-kick {
-  position: absolute;
-  width: 3px;
-  height: 20px;
-  background-color: #fff;
-  top: 40px;
-  left: 50px;
-  transform: rotate(-45deg);
-}
-
-.success-title {
-  font-size: 24px;
-  font-weight: 500;
-  color: #333;
+.success-message {
   margin-bottom: 30px;
 }
 
+.message-title {
+  font-size: 22px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.message-subtitle {
+  font-size: 16px;
+  color: #888;
+}
+
+.amount-info {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.amount-label {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+.amount-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.currency-symbol {
+  font-size: 24px;
+  color: #333;
+  margin-right: 5px;
+}
+
+.amount-value {
+  font-size: 36px;
+  font-weight: 500;
+  color: #333;
+}
+
+.actual-amount-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.actual-amount-label {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 3px;
+}
+
+.actual-amount-value {
+  font-size: 16px;
+  color: #1aad19;
+  font-weight: 500;
+}
+
 .transfer-details {
-  width: 100%;
   background-color: #fff;
   border-radius: 10px;
   padding: 20px;
   margin-bottom: 30px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  text-align: left;
 }
 
 .detail-item {
   display: flex;
   justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 12px;
 }
 
 .detail-item:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
 }
 
 .detail-label {
@@ -256,62 +323,20 @@ onMounted(async () => {
 }
 
 .detail-value {
-  font-size: 16px;
+  font-size: 14px;
   color: #333;
   text-align: right;
-}
-
-.actual-amount {
-  color: #07c160;
-  font-weight: 500;
+  max-width: 60%;
+  word-break: break-all;
 }
 
 .action-buttons {
-  width: 100%;
-  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-.details-button {
-  margin-top: 10px;
-}
-
-.notice {
-  width: 100%;
-  background-color: #fff;
-  border-radius: 10px;
-  padding: 15px 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.notice-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
-  margin-bottom: 10px;
-}
-
-.notice-content {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.5;
-}
-
-.notice-content p {
-  margin: 5px 0;
-}
-
-@keyframes scale {
-  0%, 100% {
-    transform: none;
-  }
-  50% {
-    transform: scale3d(1.1, 1.1, 1);
-  }
-}
-
-@keyframes fill {
-  100% {
-    box-shadow: inset 0px 0px 0px 30px #07c160;
-  }
+.action-button {
+  margin-bottom: 0;
 }
 </style>

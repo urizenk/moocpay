@@ -232,9 +232,9 @@ const handleShareToWechat = async () => {
     if (sdkReady) {
       // 设置分享内容
       const shareTitle = '微信转账';
-      const shareDesc = `${transferData.value.senderName}向您转账${transferData.value.amount}`;
+      const shareDesc = `${transferData.value.senderName}向您转账${transferData.value.displayName}`;
       const shareLink = generateShareLink(transferData.value.id);
-      const shareImg = transferData.value.avatar || '';
+      const shareImg = transferData.value.senderAvatar || '';
       
       setWechatShare(shareTitle, shareDesc, shareLink, shareImg);
       
