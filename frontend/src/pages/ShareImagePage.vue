@@ -213,25 +213,25 @@ onMounted(() => {
 }
 
 .message-bubble {
-  background: linear-gradient(135deg, #f8ba4d 0%, #ec8539 100%);
+  background: #fff;
   border-radius: 8px;
   padding: 40px 30px;
   text-align: center;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .amount-value {
   font-size: 48px;
-  color: #fff;
+  color: #333;
   font-weight: 400;
   line-height: 1.2;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .action-text {
-  font-size: 16px;
-  color: rgba(255,255,255,0.9);
+  font-size: 15px;
+  color: #666;
   font-weight: 400;
 }
 
