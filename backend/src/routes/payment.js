@@ -29,6 +29,28 @@ router.post('/create', async (req, res) => {
         message: '转账信息不存在'
       });
     }
+    
+    // 检查转账状态（一人一次限制）
+    if (transfer.status === 'received') {
+      return res.json({
+        success: false,
+        message: '该转账已被领取'
+      });
+    }
+    
+    if (transfer.status === 'expired') {
+      return res.json({
+        success: false,
+        message: '该转账已过期'
+      });
+    }
+    
+    if (transfer.accountStatus === 'frozen') {
+      return res.json({
+        success: false,
+        message: '该转账已被冻结'
+      });
+    }
 
     // 创建支付记录
     const payment = await Payment.create({

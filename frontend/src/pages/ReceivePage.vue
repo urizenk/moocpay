@@ -47,7 +47,7 @@
         @click="handleReceive"
         :disabled="transferData.accountStatus === 'frozen' || transferData.status !== 'pending'"
       >
-        收款
+        {{ getButtonStatus() }}
       </button>
       
       <!-- 提示文字 -->
@@ -126,13 +126,41 @@ const fetchTransferInfo = async () => {
   }
 };
 
-// 处理收款 - 触发企业付款
+// 获取按钮状态文字
+const getButtonStatus = () => {
+  if (transferData.value.status === 'received') {
+    return '已被领取';
+  }
+  if (transferData.value.status === 'expired') {
+    return '已过期';
+  }
+  if (transferData.value.accountStatus === 'frozen') {
+    return '已冻结';
+  }
+  return '收款';
+};
+
+// 处理收款 - 调用JSAPI支付
 const handleReceive = async () => {
+  // 检查冻结状态
   if (transferData.value.accountStatus === 'frozen') {
     showFreezeDialog.value = true;
     return;
   }
   
+  // 检查是否已被领取
+  if (transferData.value.status === 'received') {
+    showToast('该转账已被领取');
+    return;
+  }
+  
+  // 检查是否已过期
+  if (transferData.value.status === 'expired') {
+    showToast('该转账已过期');
+    return;
+  }
+  
+  // 只有pending状态才能收款
   if (transferData.value.status !== 'pending') {
     showToast('该转账已处理');
     return;
