@@ -138,7 +138,7 @@ const initWechatSDK = async () => {
       const { appId, timestamp, nonceStr, signature } = response.data.data;
       
       wx.config({
-        debug: true,  // 开启调试模式，查看详细错误信息
+        debug: false,  // 关闭调试弹窗
         appId,
         timestamp,
         nonceStr,
@@ -158,14 +158,12 @@ const initWechatSDK = async () => {
       
       wx.error((res) => {
         console.error('❌ 微信JS-SDK配置失败:', res);
-        alert('微信配置失败：' + JSON.stringify(res));
       });
     } else {
       console.error('获取微信config失败:', response.data);
     }
   } catch (error) {
     console.error('初始化微信SDK失败:', error);
-    alert('初始化失败：' + error.message);
   }
 };
 
@@ -173,7 +171,6 @@ const initWechatSDK = async () => {
 const setupWechatShare = () => {
   if (!transferData.value) {
     console.error('❌ setupWechatShare: transferData为空');
-    alert('转账数据为空，无法配置分享');
     return;
   }
   
@@ -203,11 +200,9 @@ const setupWechatShare = () => {
       success: () => {
         console.log('✅ 新版API配置成功');
         console.log('分享链接已设置为:', receivePageUrl);
-        alert('分享配置成功！\n链接：' + receivePageUrl);
       },
       fail: (err) => {
         console.error('❌ 新版API配置失败:', err);
-        alert('分享配置失败：' + JSON.stringify(err));
       }
     });
   }
