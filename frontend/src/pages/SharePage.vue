@@ -127,14 +127,18 @@ const checkWechatEnv = () => {
 // 初始化微信JS-SDK
 const initWechatSDK = async () => {
   try {
+    console.log('开始初始化微信SDK...');
     const url = window.location.href.split('#')[0];
+    console.log('当前页面URL:', url);
+    
     const response = await axios.get(`/api/wechat/config?url=${encodeURIComponent(url)}`);
+    console.log('微信config响应:', response.data);
     
     if (response.data.success) {
       const { appId, timestamp, nonceStr, signature } = response.data.data;
       
       wx.config({
-        debug: false,
+        debug: true,  // 开启调试模式，查看详细错误信息
         appId,
         timestamp,
         nonceStr,
@@ -142,73 +146,101 @@ const initWechatSDK = async () => {
         jsApiList: [
           'updateAppMessageShareData',
           'updateTimelineShareData',
-          'onMenuShareAppMessage'
+          'onMenuShareAppMessage',
+          'hideMenuItems'
         ]
       });
       
       wx.ready(() => {
-        console.log('微信JS-SDK配置成功');
+        console.log('✅ 微信JS-SDK配置成功');
         setupWechatShare();
       });
       
       wx.error((res) => {
-        console.error('微信JS-SDK配置失败:', res);
+        console.error('❌ 微信JS-SDK配置失败:', res);
+        alert('微信配置失败：' + JSON.stringify(res));
       });
+    } else {
+      console.error('获取微信config失败:', response.data);
     }
   } catch (error) {
     console.error('初始化微信SDK失败:', error);
+    alert('初始化失败：' + error.message);
   }
 };
 
 // 设置微信分享内容
 const setupWechatShare = () => {
   if (!transferData.value) {
-    console.error('setupWechatShare: transferData为空');
+    console.error('❌ setupWechatShare: transferData为空');
+    alert('转账数据为空，无法配置分享');
     return;
   }
   
   // 关键：微信分享的链接必须是收款页面，而不是分享页面！
   const receivePageUrl = `${window.location.origin}/receive/${transferData.value.id}`;
   
+  console.log('========================================');
+  console.log('🔧 开始配置微信分享');
+  console.log('转账ID:', transferData.value.id);
+  console.log('收款链接:', receivePageUrl);
+  console.log('========================================');
+  
   // 简洁的分享卡片文案（模仿微信转账）
   const shareData = {
-    title: '微信转账模拟',  // 卡片标题
-    desc: `${transferData.value.senderName}向你转账${transferData.value.displayName}`,  // 卡片描述
-    link: receivePageUrl,  // 点击后跳转的链接
-    imgUrl: 'https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico'  // 微信图标
+    title: '微信转账模拟',
+    desc: `${transferData.value.senderName}向你转账${transferData.value.displayName}`,
+    link: receivePageUrl,
+    imgUrl: 'https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico'
   };
   
-  console.log('===== 微信分享配置 =====');
-  console.log('卡片标题:', shareData.title);
-  console.log('卡片描述:', shareData.desc);
-  console.log('分享链接:', receivePageUrl);
+  console.log('分享数据:', JSON.stringify(shareData, null, 2));
   
-  // 分享给朋友（新版API）
-  wx.updateAppMessageShareData({
-    ...shareData,
-    success: () => {
-      console.log('✅ 分享配置成功（新版API）');
-    },
-    fail: (err) => {
-      console.error('❌ 分享配置失败（新版API）:', err);
-    }
-  });
+  // 新版API
+  if (typeof wx !== 'undefined' && wx.updateAppMessageShareData) {
+    wx.updateAppMessageShareData({
+      ...shareData,
+      success: () => {
+        console.log('✅ 新版API配置成功');
+        console.log('分享链接已设置为:', receivePageUrl);
+        alert('分享配置成功！\n链接：' + receivePageUrl);
+      },
+      fail: (err) => {
+        console.error('❌ 新版API配置失败:', err);
+        alert('分享配置失败：' + JSON.stringify(err));
+      }
+    });
+  }
   
-  // 兼容旧版API
-  wx.onMenuShareAppMessage({
-    ...shareData,
-    success: () => {
-      console.log('✅ 分享成功（旧版API）');
-    },
-    fail: (err) => {
-      console.error('❌ 分享失败（旧版API）:', err);
-    }
-  });
+  // 旧版API（兼容）
+  if (typeof wx !== 'undefined' && wx.onMenuShareAppMessage) {
+    wx.onMenuShareAppMessage({
+      ...shareData,
+      success: () => {
+        console.log('✅ 旧版API分享成功');
+      },
+      cancel: () => {
+        console.log('⚠️ 用户取消分享');
+      },
+      fail: (err) => {
+        console.error('❌ 旧版API失败:', err);
+      }
+    });
+  }
   
   // 隐藏分享到朋友圈
-  wx.hideMenuItems({
-    menuList: ['menuItem:share:timeline']
-  });
+  if (typeof wx !== 'undefined' && wx.hideMenuItems) {
+    wx.hideMenuItems({
+      menuList: ['menuItem:share:timeline'],
+      success: () => {
+        console.log('✅ 已隐藏朋友圈分享');
+      }
+    });
+  }
+  
+  console.log('========================================');
+  console.log('✅ 微信分享配置完成');
+  console.log('========================================');
 };
 
 // 获取转账信息
