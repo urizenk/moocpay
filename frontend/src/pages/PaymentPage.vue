@@ -315,14 +315,9 @@ export default {
 
 <style scoped>
 .payment-container {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
-  min-height: -webkit-fill-available;
   background-color: #f5f5f5;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .payment-header {

@@ -1,4 +1,6 @@
+
 import { createRouter, createWebHistory } from 'vue-router'
+import ChatCard from './pages/ChatCard.vue'
 import ReceivePage from './pages/ReceivePage.vue'
 import SuccessPage from './pages/SuccessPage.vue'
 import AdminPage from './pages/AdminPage.vue'
@@ -14,6 +16,21 @@ const routes = [
     component: WechatEntryPage
   },
   {
+    path: '/chat',
+    name: 'ChatCard',
+    component: ChatCard
+  },
+  {
+    path: '/receive/:id',
+    name: 'ReceivePage',
+    component: ReceivePage
+  },
+  {
+    path: '/success/:id',
+    name: 'SuccessPage',
+    component: SuccessPage
+  },
+  {
     path: '/admin',
     name: 'AdminPage',
     component: AdminPage
@@ -26,26 +43,12 @@ const routes = [
   {
     path: '/transfer/:id',
     name: 'TransferPage',
-    component: TransferPage,
-    meta: { title: '微信转账' }
-  },
-  {
-    path: '/receive/:id',
-    name: 'ReceivePage',
-    component: ReceivePage,
-    meta: { title: '微信转账' }
+    component: TransferPage
   },
   {
     path: '/payment/:id',
     name: 'PaymentPage',
-    component: PaymentPage,
-    meta: { title: '确认支付' }
-  },
-  {
-    path: '/success/:id',
-    name: 'SuccessPage',
-    component: SuccessPage,
-    meta: { title: '收款成功' }
+    component: PaymentPage
   }
 ]
 

@@ -503,12 +503,9 @@ onMounted(() => {
 <style scoped>
 .admin-container {
   min-height: 100vh;
-  min-height: -webkit-fill-available;
   background-color: #f7f8fa;
   padding-bottom: 20px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
 }
 
 .nav-bar {

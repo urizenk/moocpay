@@ -328,15 +328,10 @@ onUnmounted(() => {
 .wechat-receive-page {
   width: 100%;
   min-height: 100vh;
-  min-height: -webkit-fill-available;
   background-color: var(--theme-bg);
-  display: flex;
-  flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   transition: background-color 0.3s;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* 红包主题背景图案 */
@@ -405,7 +400,6 @@ onUnmounted(() => {
 
 /* 主内容区域 */
 .main-content {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -413,6 +407,7 @@ onUnmounted(() => {
   padding-bottom: 40px;
   position: relative;
   z-index: 1;
+  min-height: calc(100vh - 44px - 130px);
 }
 
 .icon-wrapper {

@@ -235,12 +235,8 @@ onMounted(() => {
 <style scoped>
 .share-container {
   min-height: 100vh;
-  min-height: -webkit-fill-available;
   background-color: #f7f8fa;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .nav-bar {
