@@ -51,8 +51,8 @@ class Transfer {
 
     const sql = `
       INSERT INTO transfers 
-      (id, displayName, actualAmount, senderName, senderAvatar, message, status, accountStatus, theme, receiverOpenId)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, displayName, actualAmount, senderName, senderAvatar, message, status, accountStatus, theme, receiverOpenId, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
     `;
 
     try {

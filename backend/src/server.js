@@ -139,7 +139,7 @@ async function initDefaultSettings() {
       message: "恭喜发财，大吉大利",
       createdAt: new Date().toISOString()
     };
-
+    
     await fs.writeFile(settingsFile, JSON.stringify(defaultSettings, null, 2));
     console.log('已创建默认设置文件');
   }
@@ -156,7 +156,7 @@ async function startServer() {
   try {
     // 初始化数据目录和设置
     await initDefaultSettings();
-
+    
     // 启动服务器
     app.listen(PORT, () => {
       console.log(`服务器运行在 http://localhost:${PORT}`);

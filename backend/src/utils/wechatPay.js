@@ -105,13 +105,13 @@ class WechatPay {
       const result = this.xmlToObject(response.data);
       
       // 返回完整结果，包含所有字段
-      return {
+        return {
         ...result,
         return_code: result.return_code,
         result_code: result.result_code,
         prepay_id: result.prepay_id,
         err_code_des: result.err_code_des
-      };
+        };
     } catch (error) {
       console.error('创建微信支付订单失败:', error);
       return {
