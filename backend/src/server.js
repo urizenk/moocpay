@@ -17,6 +17,7 @@ const transferRoutes = require('./routes/transfers');
 const paymentRoutes = require('./routes/payment');
 const settingsRoutes = require('./routes/settings');
 const wechatRoutes = require('./routes/wechat');
+const wechatDiagRoutes = require('./routes/wechat-diag');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,6 +50,7 @@ app.use('/api/transfers', transferRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/wechat', wechatRoutes);
+app.use('/api/wechat', wechatDiagRoutes);
 
 // 数据初始化
 const dataDir = path.join(__dirname, '../data');

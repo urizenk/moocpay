@@ -39,14 +39,35 @@
     </div>
     
     <div class="section">
-      <h2>4. 测试按钮</h2>
+      <h2>4. 后端SDK诊断</h2>
+      <button @click="runBackendDiag" class="btn primary">🔍 运行后端诊断</button>
+      <div v-if="backendDiag" class="diag-results">
+        <div 
+          v-for="(check, index) in backendDiag.checks" 
+          :key="index"
+          class="diag-item"
+          :class="'diag-' + check.status"
+        >
+          <div class="diag-name">{{ check.name }}</div>
+          <div class="diag-status">
+            <span v-if="check.status === 'success'">✅</span>
+            <span v-else-if="check.status === 'error'">❌</span>
+            <span v-else>⚠️</span>
+          </div>
+          <pre class="diag-details">{{ JSON.stringify(check.details, null, 2) }}</pre>
+        </div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <h2>5. 前端SDK测试</h2>
       <button @click="testConfig" class="btn">测试SDK配置</button>
       <button @click="testShare" class="btn">测试分享配置</button>
       <button @click="openReceivePage" class="btn">直接打开收款页面</button>
     </div>
     
     <div class="section">
-      <h2>5. 日志输出</h2>
+      <h2>6. 日志输出</h2>
       <div class="logs">
         <div v-for="(log, index) in logs" :key="index" :class="'log-' + log.type">
           {{ log.time }} - {{ log.message }}
@@ -55,7 +76,7 @@
     </div>
     
     <div class="section">
-      <h2>6. 分享测试</h2>
+      <h2>7. 分享测试</h2>
       <p class="tip">点击右上角"⋯"选择"发送给朋友"，查看是否能正确分享</p>
       <button @click="triggerShare" class="btn primary">触发微信分享</button>
     </div>
@@ -75,6 +96,7 @@ const transferId = ref('');
 const sdkConfigured = ref(false);
 const shareConfigured = ref(false);
 const logs = ref([]);
+const backendDiag = ref(null);
 
 const receivePageUrl = computed(() => {
   return transferId.value ? `${window.location.origin}/receive/${transferId.value}` : '';
@@ -84,6 +106,33 @@ const addLog = (message, type = 'info') => {
   const time = new Date().toLocaleTimeString();
   logs.value.push({ time, message, type });
   console.log(`[${type.toUpperCase()}] ${message}`);
+};
+
+const runBackendDiag = async () => {
+  addLog('🔍 开始后端诊断...', 'info');
+  try {
+    const response = await axios.get('/api/wechat/diag');
+    backendDiag.value = response.data.diagnostics;
+    
+    if (response.data.success) {
+      addLog('✅ 后端诊断完成', 'success');
+    } else {
+      addLog(`❌ 后端诊断失败: ${response.data.message}`, 'error');
+    }
+    
+    // 检查每个检查项
+    backendDiag.value.checks.forEach(check => {
+      if (check.status === 'success') {
+        addLog(`✅ ${check.name} - 通过`, 'success');
+      } else if (check.status === 'error') {
+        addLog(`❌ ${check.name} - 失败`, 'error');
+      } else {
+        addLog(`⚠️ ${check.name} - 警告`, 'warning');
+      }
+    });
+  } catch (error) {
+    addLog(`❌ 后端诊断请求失败: ${error.message}`, 'error');
+  }
 };
 
 const checkEnv = () => {
@@ -330,6 +379,54 @@ input[type="text"] {
 
 .log-info {
   color: #666;
+}
+
+.diag-results {
+  margin-top: 12px;
+}
+
+.diag-item {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.diag-success {
+  border-color: #07c160;
+  background: #f0fff4;
+}
+
+.diag-error {
+  border-color: #ff4444;
+  background: #fff0f0;
+}
+
+.diag-warning {
+  border-color: #ff9800;
+  background: #fff8e1;
+}
+
+.diag-name {
+  font-weight: bold;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.diag-status {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.diag-details {
+  font-size: 11px;
+  background: #f5f5f5;
+  padding: 8px;
+  border-radius: 4px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 .tip {
