@@ -154,8 +154,8 @@ export default {
       try {
         // 调用后端API创建支付订单
         const response = await axios.post('/api/payment/create', {
-          transferId: transferData.value.id,
-          amount: transferData.value.actualAmount,
+            transferId: transferData.value.id,
+            amount: transferData.value.actualAmount,
           description: `向${transferData.value.senderName}转账`,
           openid: userOpenId.value // 传递 OpenID
         }, {
@@ -227,8 +227,8 @@ export default {
       try {
         // 创建支付订单
         const createResponse = await axios.post('/api/payment/create', {
-          transferId: transferData.value.id,
-          amount: transferData.value.actualAmount,
+            transferId: transferData.value.id,
+            amount: transferData.value.actualAmount,
           description: `向${transferData.value.senderName}转账`,
           openid: userOpenId.value || 'test_openid' // 测试环境使用默认值
         }, {
@@ -240,7 +240,7 @@ export default {
         if (createResult.success) {
           // 调用模拟支付成功接口
           const mockResponse = await axios.post('/api/payment/mock-success', {
-            paymentId: createResult.data.paymentId
+              paymentId: createResult.data.paymentId
           }, {
             withCredentials: true
           })
