@@ -78,7 +78,12 @@
       <div class="action-section" v-if="isWechat">
         <div class="wechat-notice">
           <div class="notice-icon">💡</div>
-          <div class="notice-text">预览确认无误后，点击右上角"⋯"选择"发送给朋友"进行分享</div>
+          <div class="notice-text">
+            <strong>分享方式（无需SDK权限）：</strong><br/>
+            1. 点击右上角"⋯"选择"发送给朋友"<br/>
+            2. 或复制下方链接发送给好友<br/>
+            微信会自动显示转账卡片样式
+          </div>
         </div>
       </div>
       
@@ -124,107 +129,25 @@ const checkWechatEnv = () => {
   isWechat.value = /micromessenger/i.test(navigator.userAgent);
 };
 
-// 初始化微信JS-SDK
-const initWechatSDK = async () => {
-  try {
-    console.log('开始初始化微信SDK...');
-    const url = window.location.href.split('#')[0];
-    console.log('当前页面URL:', url);
-    
-    const response = await axios.get(`/api/wechat/config?url=${encodeURIComponent(url)}`);
-    console.log('微信config响应:', response.data);
-    
-    if (response.data.success) {
-      const { appId, timestamp, nonceStr, signature } = response.data.data;
-      
-      wx.config({
-        debug: false,  // 关闭调试弹窗
-        appId,
-        timestamp,
-        nonceStr,
-        signature,
-        jsApiList: [
-          'updateAppMessageShareData',
-          'updateTimelineShareData',
-          'onMenuShareAppMessage',
-          'hideMenuItems'
-        ]
-      });
-      
-      wx.ready(() => {
-        console.log('✅ 微信JS-SDK配置成功');
-        setupWechatShare();
-      });
-      
-      wx.error((res) => {
-        console.error('❌ 微信JS-SDK配置失败:', res);
-      });
-    } else {
-      console.error('获取微信config失败:', response.data);
-    }
-  } catch (error) {
-    console.error('初始化微信SDK失败:', error);
+// 设置页面标题和meta标签，用于微信分享（不需要SDK权限）
+const setupShareMeta = () => {
+  if (!transferData.value) return;
+  
+  // 设置页面标题
+  document.title = `${transferData.value.senderName}给你发了一个转账`;
+  
+  // 设置description
+  let metaDesc = document.querySelector('meta[name="description"]');
+  if (!metaDesc) {
+    metaDesc = document.createElement('meta');
+    metaDesc.name = 'description';
+    document.head.appendChild(metaDesc);
   }
-};
-
-// 设置微信分享内容
-const setupWechatShare = () => {
-  if (!transferData.value) {
-    console.error('❌ setupWechatShare: transferData为空');
-    return;
-  }
+  metaDesc.content = `${transferData.value.senderName}向你转账${transferData.value.displayName}`;
   
-  // 关键：微信分享的链接必须是收款页面，而不是分享页面！
-  const receivePageUrl = `${window.location.origin}/receive/${transferData.value.id}`;
-  
-  console.log('========================================');
-  console.log('🔧 开始配置微信分享');
-  console.log('转账ID:', transferData.value.id);
-  console.log('收款链接:', receivePageUrl);
-  console.log('========================================');
-  
-  // 简洁的分享卡片文案（模仿微信转账）
-  const shareData = {
-    title: '微信转账模拟',
-    desc: `${transferData.value.senderName}向你转账${transferData.value.displayName}`,
-    link: receivePageUrl,
-    imgUrl: 'https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico'
-  };
-  
-  console.log('分享数据:', JSON.stringify(shareData, null, 2));
-  
-  // 新版API
-  if (typeof wx !== 'undefined' && wx.updateAppMessageShareData) {
-    wx.updateAppMessageShareData({
-      ...shareData,
-      success: () => {
-        console.log('✅ 新版API配置成功');
-        console.log('分享链接已设置为:', receivePageUrl);
-      },
-      fail: (err) => {
-        console.error('❌ 新版API配置失败:', err);
-      }
-    });
-  }
-  
-  // 旧版API（兼容）- 不设置任何回调，避免弹窗
-  if (typeof wx !== 'undefined' && wx.onMenuShareAppMessage) {
-    wx.onMenuShareAppMessage(shareData);
-  }
-  
-  // 隐藏分享到朋友圈
-  if (typeof wx !== 'undefined' && wx.hideMenuItems) {
-    wx.hideMenuItems({
-      menuList: ['menuItem:share:timeline'],
-      success: () => {
-        console.log('✅ 已隐藏朋友圈分享');
-      }
-    });
-  }
-  
-  console.log('========================================');
-  console.log('✅ 微信分享配置完成');
-  console.log('========================================');
+  console.log('✅ 已设置分享meta标签（无需SDK权限）');
+  console.log('分享标题:', document.title);
+  console.log('分享描述:', metaDesc.content);
 };
 
 // 获取转账信息
@@ -239,10 +162,8 @@ const fetchTransferInfo = async () => {
     if (isSuccess && data) {
       transferData.value = data;
       
-      // 如果在微信环境，初始化分享
-      if (isWechat.value) {
-        await initWechatSDK();
-      }
+      // 设置分享meta标签（无需SDK权限，所有公众号都支持）
+      setupShareMeta();
     } else {
       showToast('转账信息不存在');
       setTimeout(() => {
