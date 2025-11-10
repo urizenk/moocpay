@@ -38,78 +38,66 @@ router.post('/create', async (req, res) => {
       status: 'pending'
     });
 
-    // 开发环境或测试环境，使用模拟转账
+    // 开发环境，使用模拟支付
     if (process.env.NODE_ENV === 'development' || !userOpenId) {
-      console.log('开发环境或无OpenID，使用模拟转账');
-      
-      // 直接更新为成功状态
-      await Payment.update(payment.id, {
-        status: 'paid',
-        transactionId: `MOCK_${Date.now()}`,
-        paidAt: new Date()
-      });
-      
-      await Transfer.update(transferId, {
-        status: 'received',
-        receivedAt: new Date()
-      });
-      
+      console.log('开发环境或无OpenID，使用模拟支付');
       return res.json({
         success: true,
-        message: '模拟转账成功',
         data: {
           paymentId: payment.id,
-          transferSuccess: true
+          orderId: `DEV_${Date.now()}`,
+          paymentParams: {
+            mock: true,
+            paymentId: payment.id
+          }
         }
       });
     }
 
-    // 生产环境：使用企业付款到零钱
-    const wechatTransfer = new WechatTransfer();
-    const partnerTradeNo = `TRF${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+    // 生产环境：使用JSAPI支付（好友付钱给商户）
+    const wechatPay = new WechatPay();
+    const orderId = `PAY${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+    const notifyUrl = `${process.env.SITE_URL}/api/payment/notify`;
 
-    const transferResult = await wechatTransfer.transferToBalance({
-      partner_trade_no: partnerTradeNo,
-      openid: userOpenId,
-      amount: Math.round(amount * 100), // 转换为分
-      desc: description || '转账',
-      spbill_create_ip: req.ip || '127.0.0.1'
+    const paymentResult = await wechatPay.createOrder({
+      body: description || '收款',
+      out_trade_no: orderId,
+      total_fee: Math.round(amount * 100), // 转换为分
+      spbill_create_ip: req.ip || '127.0.0.1',
+      notify_url: notifyUrl,
+      trade_type: 'JSAPI',
+      openid: userOpenId
     });
 
-    if (transferResult.return_code === 'SUCCESS' && transferResult.result_code === 'SUCCESS') {
-      // 企业付款成功
+    if (paymentResult.return_code === 'SUCCESS' && paymentResult.result_code === 'SUCCESS') {
+      // 统一下单成功
       await Payment.update(payment.id, {
-        orderId: partnerTradeNo,
-        transactionId: transferResult.payment_no,
-        status: 'paid',
-        paidAt: new Date()
+        orderId,
+        prepayId: paymentResult.prepay_id,
+        status: 'created'
       });
 
-      // 更新转账状态
-      await Transfer.update(transferId, {
-        status: 'received',
-        receivedAt: new Date()
-      });
+      // 生成JSAPI支付参数
+      const paymentParams = wechatPay.generateJSAPIParams(paymentResult.prepay_id);
 
       res.json({
         success: true,
-        message: '转账成功',
         data: {
           paymentId: payment.id,
-          transactionId: transferResult.payment_no,
-          transferSuccess: true
+          orderId,
+          paymentParams
         }
       });
     } else {
-      // 企业付款失败
+      // 支付订单创建失败
       await Payment.update(payment.id, {
         status: 'failed',
-        error: transferResult.err_code_des || transferResult.return_msg || '转账失败'
+        error: paymentResult.err_code_des || '创建订单失败'
       });
 
       res.json({
         success: false,
-        message: transferResult.err_code_des || transferResult.return_msg || '转账失败'
+        message: paymentResult.err_code_des || '创建订单失败'
       });
     }
   } catch (error) {
