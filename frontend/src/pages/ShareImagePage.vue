@@ -21,13 +21,6 @@
               <div class="action-text">请收款</div>
               <div class="action-arrow">→</div>
             </div>
-            <div class="transfer-footer">
-              <div class="footer-line"></div>
-              <div class="footer-info">
-                <div class="sender-name">{{ transferData?.senderName || '发件人' }}</div>
-                <div class="transfer-message">{{ transferData?.message || '恭喜发财，大吉大利' }}</div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -260,7 +253,7 @@ onMounted(() => {
 /* 收款按钮 */
 .action-button {
   background: rgba(255,255,255,0.95);
-  margin: 25px 30px;
+  margin: 25px 30px 35px;
   padding: 15px 20px;
   border-radius: 6px;
   display: flex;
@@ -280,37 +273,6 @@ onMounted(() => {
   font-size: 20px;
   color: #999;
   font-weight: 300;
-}
-
-/* 底部信息区 */
-.transfer-footer {
-  padding: 20px;
-  background: rgba(0,0,0,0.08);
-}
-
-.footer-line {
-  height: 1px;
-  background: rgba(255,255,255,0.25);
-  margin-bottom: 15px;
-}
-
-.footer-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #fff;
-}
-
-.sender-name {
-  font-size: 14px;
-  font-weight: 500;
-  opacity: 0.95;
-}
-
-.transfer-message {
-  font-size: 14px;
-  opacity: 0.85;
-  flex: 1;
 }
 
 .actions {
