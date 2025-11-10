@@ -442,16 +442,19 @@ onUnmounted(() => {
   right: 0;
   padding: 24px;
   background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .receive-btn {
-  width: 100%;
-  height: 50px;
+  width: 200px;
+  height: 45px;
   background-color: #09BB07;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   color: #ffffff;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
   margin-bottom: 12px;
