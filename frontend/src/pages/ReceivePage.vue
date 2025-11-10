@@ -116,16 +116,55 @@ const fetchTransferInfo = async () => {
       };
       
       // 设置页面标题和meta，用于微信分享（不需要SDK权限）
-      document.title = `${data.senderName}给你发了一个转账`;
+      const shareTitle = `${data.senderName}给你发了一个转账`;
+      const shareDesc = `向你转账${data.displayName}`;
+      const shareImage = 'https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico';
       
-      // 设置description meta标签
+      document.title = shareTitle;
+      
+      // 设置普通meta标签
       let metaDesc = document.querySelector('meta[name="description"]');
       if (!metaDesc) {
         metaDesc = document.createElement('meta');
         metaDesc.name = 'description';
         document.head.appendChild(metaDesc);
       }
-      metaDesc.content = `${data.senderName}向你转账${data.displayName}`;
+      metaDesc.content = shareDesc;
+      
+      // 设置Open Graph标签（微信优先读取这些）
+      const setOgMeta = (property, content) => {
+        let meta = document.querySelector(`meta[property="${property}"]`);
+        if (!meta) {
+          meta = document.createElement('meta');
+          meta.setAttribute('property', property);
+          document.head.appendChild(meta);
+        }
+        meta.content = content;
+      };
+      
+      setOgMeta('og:title', shareTitle);
+      setOgMeta('og:description', shareDesc);
+      setOgMeta('og:image', shareImage);
+      
+      // 设置itemprop标签
+      const setItemProp = (name, content) => {
+        let meta = document.querySelector(`meta[itemprop="${name}"]`);
+        if (!meta) {
+          meta = document.createElement('meta');
+          meta.setAttribute('itemprop', name);
+          document.head.appendChild(meta);
+        }
+        meta.content = content;
+      };
+      
+      setItemProp('name', shareTitle);
+      setItemProp('description', shareDesc);
+      setItemProp('image', shareImage);
+      
+      console.log('✅ 已设置微信分享meta标签:');
+      console.log('标题:', shareTitle);
+      console.log('描述:', shareDesc);
+      console.log('图片:', shareImage);
     } else {
       showToast('转账信息不存在');
       setTimeout(() => {
