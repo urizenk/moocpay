@@ -181,13 +181,19 @@ const setupWechatShare = async () => {
 const fetchTransferInfo = async () => {
   try {
     const { id } = route.params;
+    console.log('SharePage: 获取转账信息, ID:', id);
+    
     const response = await axios.get(`/api/transfers/${id}`);
+    console.log('SharePage: API响应:', response.data);
     
     const isSuccess = response.data?.success ?? true;
     const data = response.data?.data ?? response.data;
     
-    if (isSuccess && data) {
+    console.log('SharePage: 解析结果 - success:', isSuccess, 'data:', data);
+    
+    if (isSuccess && data && data.id) {
       transferData.value = data;
+      console.log('✅ SharePage: 转账信息加载成功');
       
       // 设置分享meta标签（作为后备方案）
       setupShareMeta();
@@ -197,14 +203,17 @@ const fetchTransferInfo = async () => {
         setupWechatShare();
       }
     } else {
+      console.error('❌ SharePage: 转账信息无效', { isSuccess, data });
       showToast('转账信息不存在');
       setTimeout(() => {
         router.push('/admin');
       }, 1500);
     }
   } catch (error) {
-    console.error('获取转账信息失败:', error);
+    console.error('❌ SharePage: 获取转账信息失败:', error);
+    console.error('错误详情:', error.response?.data);
     showToast('获取转账信息失败');
+    // 不要立即跳转，让用户看到错误
   }
 };
 
