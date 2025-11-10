@@ -75,19 +75,15 @@
     
     <!-- 转账记录列表 -->
     <div class="records-section">
-      <div class="section-title">| 我的转账记录</div>
+      <div class="section-title">| 我的转账记录（共{{ records.length }}条）</div>
       
-      <van-list
-        v-model:loading="loading"
-        :finished="finished"
-        finished-text="没有更多了"
-        @load="loadRecords"
-      >
+      <!-- 直接渲染，不使用van-list -->
+      <div class="records-container">
         <div class="record-item" v-for="item in records" :key="item.id">
           <div class="record-header">
             <div class="record-amount">
               <span class="amount-value">{{ item.displayName }}</span>
-              <span class="actual-amount">(实际到账: {{ item.actualAmount.toFixed(2) }}元)</span>
+              <span class="actual-amount">(实际到账: {{ parseFloat(item.actualAmount).toFixed(2) }}元)</span>
             </div>
           </div>
           
@@ -143,13 +139,14 @@
             </van-button>
           </div>
         </div>
+        </div>
         
         <van-empty 
-          v-if="!loading && records.length === 0" 
+          v-if="records.length === 0" 
           description="暂无转账记录"
           image="search"
         />
-      </van-list>
+      </div>
     </div>
     
     <!-- 编辑弹窗 -->
