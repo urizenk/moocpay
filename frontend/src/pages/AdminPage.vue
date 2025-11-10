@@ -139,7 +139,6 @@
             </van-button>
           </div>
         </div>
-        </div>
         
         <van-empty 
           v-if="records.length === 0" 
