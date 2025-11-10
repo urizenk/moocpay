@@ -266,7 +266,7 @@ const router = useRouter();
 const loading = ref(false);
 const finished = ref(false);
 const creating = ref(false);
-const balance = ref(9989.08);
+const balance = ref(0); // 动态余额，从后端获取
 const senderName = ref('张三');
 const showSettings = ref(false);
 const showEditDialog = ref(false);
@@ -567,10 +567,31 @@ const editAvatar = () => {
   showToast('头像上传功能开发中...');
 };
 
+// 加载余额
+const loadBalance = async () => {
+  try {
+    // TODO: 从后端API获取真实余额
+    // const response = await axios.get('/api/balance');
+    // balance.value = response.data.balance;
+    
+    // 临时：根据转账记录计算余额
+    const initialBalance = 10000; // 初始余额
+    const totalSpent = records.value.reduce((sum, record) => {
+      return sum + parseFloat(record.actualAmount || 0);
+    }, 0);
+    balance.value = initialBalance - totalSpent;
+  } catch (error) {
+    console.error('加载余额失败:', error);
+    balance.value = 10000; // 默认值
+  }
+};
+
 onMounted(async () => {
   console.log('AdminPage mounted, 开始加载数据...');
   await loadRecords();
+  await loadBalance();
   console.log('数据加载完成，records长度:', records.value.length);
+  console.log('当前余额:', balance.value);
 });
 </script>
 
