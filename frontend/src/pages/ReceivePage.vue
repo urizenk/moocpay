@@ -123,6 +123,10 @@ const fetchTransferInfo = async () => {
   } catch (error) {
     console.error('获取转账信息失败:', error);
     showToast('获取转账信息失败');
+    // 不要跳转到主页，留在当前页显示错误
+    setTimeout(() => {
+      router.push('/');
+    }, 2000);
   }
 };
 
