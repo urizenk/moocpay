@@ -532,6 +532,8 @@ onMounted(() => {
   background-color: #f7f8fa;
   padding-bottom: 20px;
   padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .nav-bar {
