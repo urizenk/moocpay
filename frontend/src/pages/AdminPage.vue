@@ -301,6 +301,7 @@ const createTransfer = async () => {
       duration: 0
     });
     
+    console.log('开始创建转账...');
     const response = await axios.post('/api/transfers', {
       displayName: `${displayAmount.toFixed(2)}元`,
       actualAmount: actualAmount,
@@ -312,11 +313,13 @@ const createTransfer = async () => {
       theme: form.value.theme
     });
     
+    console.log('创建响应:', response.data);
     closeToast();
     
     if (response.data.success || response.data.id) {
       showToast('创建成功');
       
+      // 清空表单
       form.value = {
         displayName: '',
         actualAmount: '',
@@ -324,16 +327,11 @@ const createTransfer = async () => {
         theme: 'classic'
       };
       
-      // 将新记录添加到列表顶部
-      const newRecord = response.data.data || response.data;
-      if (newRecord && newRecord.id) {
-        records.value.unshift(newRecord);
-      } else {
-        // 如果没有返回数据，重新加载列表
-        records.value = [];
-        finished.value = false;
-        await loadRecords();
-      }
+      // 重新加载列表（最可靠的方式）
+      console.log('重新加载转账列表...');
+      loading.value = true;
+      finished.value = false;
+      await loadRecords();
     } else {
       showToast('创建失败');
     }
