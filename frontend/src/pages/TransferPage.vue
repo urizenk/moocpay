@@ -47,7 +47,13 @@ const loadAndRedirect = async () => {
 };
 
 onMounted(() => {
-  loadAndRedirect();
+  // 立即跳转，不等待
+  const { id } = route.params;
+  if (id) {
+    router.replace(`/receive/${id}`);
+  } else {
+    router.push('/');
+  }
 });
 </script>
 
