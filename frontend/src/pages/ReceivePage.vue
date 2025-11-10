@@ -202,15 +202,15 @@ const getButtonText = () => {
     case 'redpacket':
       return '开';
     case 'business':
-      return '确认收款';
+      return '立即支付';
     case 'payment':
-      return '收款';
+      return '立即支付';
     case 'wallet':
-      return '转入零钱通';
+      return '立即支付';
     case 'reward':
-      return '领取奖励';
+      return '领取';
     default:
-      return '收款';
+      return '立即支付';
   }
 };
 
@@ -222,15 +222,15 @@ const getTipsText = () => {
     case 'redpacket':
       return '24小时内未领取，红包将退回';
     case 'business':
-      return '请确认转账信息无误后收款';
+      return `您将向${transferData.value.senderName}支付 ¥${transferData.value.actualAmount.toFixed(2)}`;
     case 'payment':
-      return '1天内未确认，将退还给对方';
+      return `实际支付金额：¥${transferData.value.actualAmount.toFixed(2)}`;
     case 'wallet':
-      return '转入零钱通，享受稳健收益';
+      return `您将向${transferData.value.senderName}支付 ¥${transferData.value.actualAmount.toFixed(2)}`;
     case 'reward':
       return '奖励有效期24小时';
     default:
-      return '1天内未确认，将退还给对方';
+      return `实际支付金额：¥${transferData.value.actualAmount.toFixed(2)}`;
   }
 };
 
