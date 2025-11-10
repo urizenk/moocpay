@@ -42,6 +42,65 @@ app.use(session({
   }
 }));
 
+// ========== 动态meta标签路由（必须在静态文件之前！） ==========
+// 处理 /receive/:id 页面的动态meta标签
+app.get('/receive/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const transfer = await Transfer.getById(id);
+    
+    if (transfer) {
+      const htmlPath = path.join(__dirname, '../../frontend/dist/index.html');
+      let html = await fs.readFile(htmlPath, 'utf-8');
+      
+      const title = `${transfer.senderName}给你发了一个转账`;
+      const description = `向你转账${transfer.displayName}`;
+      
+      html = html.replace('<title>微信转账</title>', `<title>${title}</title>`);
+      html = html.replace('<meta name="description" content="你收到一笔转账">', `<meta name="description" content="${description}">`);
+      html = html.replace('<meta property="og:title" content="微信转账">', `<meta property="og:title" content="${title}">`);
+      html = html.replace('<meta property="og:description" content="你收到一笔转账">', `<meta property="og:description" content="${description}">`);
+      html = html.replace('<meta itemprop="name" content="微信转账">', `<meta itemprop="name" content="${title}">`);
+      html = html.replace('<meta itemprop="description" content="你收到一笔转账">', `<meta itemprop="description" content="${description}">`);
+      
+      return res.send(html);
+    }
+  } catch (error) {
+    console.error('生成动态HTML失败:', error);
+  }
+  
+  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
+});
+
+// 处理 /share/:id 页面的动态meta标签
+app.get('/share/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const transfer = await Transfer.getById(id);
+    
+    if (transfer) {
+      const htmlPath = path.join(__dirname, '../../frontend/dist/index.html');
+      let html = await fs.readFile(htmlPath, 'utf-8');
+      
+      const title = `${transfer.senderName}给你发了一个转账`;
+      const description = `向你转账${transfer.displayName}`;
+      
+      html = html.replace('<title>微信转账</title>', `<title>${title}</title>`);
+      html = html.replace('<meta name="description" content="你收到一笔转账">', `<meta name="description" content="${description}">`);
+      html = html.replace('<meta property="og:title" content="微信转账">', `<meta property="og:title" content="${title}">`);
+      html = html.replace('<meta property="og:description" content="你收到一笔转账">', `<meta property="og:description" content="${description}">`);
+      html = html.replace('<meta itemprop="name" content="微信转账">', `<meta itemprop="name" content="${title}">`);
+      html = html.replace('<meta itemprop="description" content="你收到一笔转账">', `<meta itemprop="description" content="${description}">`);
+      
+      return res.send(html);
+    }
+  } catch (error) {
+    console.error('生成动态HTML失败:', error);
+  }
+  
+  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
+});
+
 // 静态文件服务
 app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 
@@ -86,116 +145,6 @@ async function initDefaultSettings() {
   }
 }
 
-// ========== 重要：动态meta标签路由必须在静态文件服务之后，startServer之前 ==========
-// 处理分享页面的动态meta标签（微信分享专用）
-app.get('/receive/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const transfer = await Transfer.getById(id);
-    
-    if (transfer) {
-      // 读取HTML模板
-      const htmlPath = path.join(__dirname, '../../frontend/dist/index.html');
-      let html = await fs.readFile(htmlPath, 'utf-8');
-      
-      // 动态生成meta标签
-      const title = `${transfer.senderName}给你发了一个转账`;
-      const description = `向你转账${transfer.displayName}`;
-      const image = 'https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico';
-      
-      // 替换meta标签
-      html = html.replace(
-        '<title>微信转账</title>',
-        `<title>${title}</title>`
-      );
-      
-      html = html.replace(
-        '<meta name="description" content="你收到一笔转账">',
-        `<meta name="description" content="${description}">`
-      );
-      
-      html = html.replace(
-        '<meta property="og:title" content="微信转账">',
-        `<meta property="og:title" content="${title}">`
-      );
-      
-      html = html.replace(
-        '<meta property="og:description" content="你收到一笔转账">',
-        `<meta property="og:description" content="${description}">`
-      );
-      
-      html = html.replace(
-        '<meta itemprop="name" content="微信转账">',
-        `<meta itemprop="name" content="${title}">`
-      );
-      
-      html = html.replace(
-        '<meta itemprop="description" content="你收到一笔转账">',
-        `<meta itemprop="description" content="${description}">`
-      );
-      
-      return res.send(html);
-    }
-  } catch (error) {
-    console.error('动态生成HTML失败:', error);
-  }
-  
-  // 如果失败，返回默认HTML
-  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
-});
-
-// 处理分享页面（复用receive的逻辑）
-app.get('/share/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const transfer = await Transfer.getById(id);
-    
-    if (transfer) {
-      const htmlPath = path.join(__dirname, '../../frontend/dist/index.html');
-      let html = await fs.readFile(htmlPath, 'utf-8');
-      
-      const title = `${transfer.senderName}给你发了一个转账`;
-      const description = `向你转账${transfer.displayName}`;
-      const image = 'https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico';
-      
-      html = html.replace(
-        '<title>微信转账</title>',
-        `<title>${title}</title>`
-      );
-      
-      html = html.replace(
-        '<meta name="description" content="你收到一笔转账">',
-        `<meta name="description" content="${description}">`
-      );
-      
-      html = html.replace(
-        '<meta property="og:title" content="微信转账">',
-        `<meta property="og:title" content="${title}">`
-      );
-      
-      html = html.replace(
-        '<meta property="og:description" content="你收到一笔转账">',
-        `<meta property="og:description" content="${description}">`
-      );
-      
-      html = html.replace(
-        '<meta itemprop="name" content="微信转账">',
-        `<meta itemprop="name" content="${title}">`
-      );
-      
-      html = html.replace(
-        '<meta itemprop="description" content="你收到一笔转账">',
-        `<meta itemprop="description" content="${description}">`
-      );
-      
-      return res.send(html);
-    }
-  } catch (error) {
-    console.error('动态生成HTML失败:', error);
-  }
-  
-  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
-});
 
 // 处理其他前端路由
 app.get('*', (req, res) => {
