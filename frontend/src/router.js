@@ -10,13 +10,13 @@ import WechatEntryPage from './pages/WechatEntryPage.vue'
 const routes = [
   {
     path: '/',
-    name: 'WechatEntry',
-    component: WechatEntryPage
-  },
-  {
-    path: '/admin',
     name: 'AdminPage',
     component: AdminPage
+  },
+  {
+    path: '/entry',
+    name: 'WechatEntry',
+    component: WechatEntryPage
   },
   {
     path: '/share/:id',

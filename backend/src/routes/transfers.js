@@ -52,10 +52,14 @@ router.get('/:id', async (req, res) => {
         senderName: transfer.senderName,
         senderAvatar: transfer.senderAvatar || '/default-avatar.png',
         message: transfer.message || '',
+        theme: transfer.theme || 'classic',
+        accountStatus: transfer.accountStatus || 'available',
         createTime: transfer.createdAt,
         receiveTime: transfer.updatedAt,
         status: transfer.status,
-        paymentId: transfer.paymentId
+        paymentId: transfer.paymentId,
+        createdAt: transfer.createdAt,
+        updatedAt: transfer.updatedAt
       }
     });
   } catch (error) {
@@ -67,7 +71,7 @@ router.get('/:id', async (req, res) => {
 // 创建新的转账记录
 router.post('/', async (req, res) => {
   try {
-    const { displayName, actualAmount, senderName, senderAvatar, message } = req.body;
+    const { displayName, actualAmount, senderName, senderAvatar, message, theme, accountStatus } = req.body;
     
     if (!displayName || !actualAmount || !senderName) {
       return res.status(400).json({ 
@@ -81,7 +85,9 @@ router.post('/', async (req, res) => {
       actualAmount: parseFloat(actualAmount),
       senderName,
       senderAvatar: senderAvatar || '/default-avatar.png',
-      message: message || ''
+      message: message || '',
+      theme: theme || 'classic',
+      accountStatus: accountStatus || 'available'
     });
     
     res.status(201).json({
@@ -101,7 +107,7 @@ router.post('/', async (req, res) => {
 router.patch('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, paymentId } = req.body;
+    const { status, paymentId, displayName, actualAmount, message, accountStatus, theme } = req.body;
     
     const transfer = await Transfer.getById(id);
     if (!transfer) {
@@ -113,13 +119,13 @@ router.patch('/:id', async (req, res) => {
     
     // 更新转账记录
     const updateData = {};
-    if (status) {
-      updateData.status = status;
-    }
-    
-    if (paymentId) {
-      updateData.paymentId = paymentId;
-    }
+    if (status) updateData.status = status;
+    if (paymentId) updateData.paymentId = paymentId;
+    if (displayName) updateData.displayName = displayName;
+    if (actualAmount) updateData.actualAmount = parseFloat(actualAmount);
+    if (message !== undefined) updateData.message = message;
+    if (accountStatus) updateData.accountStatus = accountStatus;
+    if (theme) updateData.theme = theme;
     
     // 如果状态为已收款，更新收款时间
     if (status === 'received') {
