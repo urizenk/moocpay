@@ -143,10 +143,19 @@
               type="success" 
               size="small" 
               round
+              icon="photo-o"
+              @click="generateShareImage(item)"
+            >
+              生成图片
+            </van-button>
+            <van-button 
+              type="primary" 
+              size="small" 
+              round
               icon="share-o"
               @click="shareRecord(item)"
             >
-              分享
+              分享链接
             </van-button>
             <van-button 
               type="warning" 
@@ -481,6 +490,11 @@ const saveEdit = async () => {
     console.error('保存失败:', error);
     showToast('保存失败，请重试');
   }
+};
+
+// 生成分享图片
+const generateShareImage = (item) => {
+  router.push(`/share-image/${item.id}`);
 };
 
 // 分享记录 - 使用"口令+链接"方式

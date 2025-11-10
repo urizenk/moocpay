@@ -167,13 +167,16 @@ const fetchTransferInfo = async () => {
       console.log('描述:', shareDesc);
       console.log('图片:', shareImage);
       
-      // 如果在微信中，使用JSSDK配置分享（认证公众号）
+      // 如果在微信中，使用JSSDK配置分享（认证公众号）- 转账样式
       if (isWechatBrowser()) {
         try {
           await initWechatSDK();
           const shareLink = `${window.location.origin}/receive/${data.id}?t=${Date.now()}`;
-          setWechatShare(shareTitle, shareDesc, shareLink, shareImage);
-          console.log('✅ 微信JSSDK分享已配置');
+          // 修改为转账样式：标题显示金额
+          const shareTitle2 = `￥${data.displayName}`;
+          const shareDesc2 = `${data.senderName}向你转账，点击领取`;
+          setWechatShare(shareTitle2, shareDesc2, shareLink, shareImage);
+          console.log('✅ 微信JSSDK分享已配置（转账样式）');
         } catch (error) {
           console.error('配置微信JSSDK失败:', error);
         }

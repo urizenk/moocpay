@@ -154,7 +154,7 @@ const setupShareMeta = () => {
   console.log('分享描述:', metaDesc.content);
 };
 
-// 配置微信分享（使用JSSDK）
+// 配置微信分享（使用JSSDK）- 优化样式更像转账
 const setupWechatShare = async () => {
   if (!transferData.value || !isWechat.value) return;
   
@@ -162,15 +162,16 @@ const setupWechatShare = async () => {
     // 初始化微信SDK
     await initWechatSDK();
     
-    // 设置分享内容
-    const shareTitle = `${transferData.value.senderName}给你发了一个转账`;
-    const shareDesc = `向你转账${transferData.value.displayName}`;
+    // 设置分享内容 - 模拟转账消息的格式
+    const shareTitle = `￥${transferData.value.displayName}`;
+    const shareDesc = `${transferData.value.senderName}向你转账，点击领取`;
     const shareLink = `${window.location.origin}/receive/${transferData.value.id}?t=${shareTimestamp}`;
+    // 使用微信官方转账图标
     const shareImg = 'https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico';
     
     setWechatShare(shareTitle, shareDesc, shareLink, shareImg);
     
-    console.log('✅ 微信JSSDK分享已配置');
+    console.log('✅ 微信JSSDK分享已配置（转账样式）');
   } catch (error) {
     console.error('配置微信分享失败:', error);
   }

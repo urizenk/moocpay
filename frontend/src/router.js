@@ -3,6 +3,7 @@ import ReceivePage from './pages/ReceivePage.vue'
 import SuccessPage from './pages/SuccessPage.vue'
 import AdminPage from './pages/AdminPage.vue'
 import SharePage from './pages/SharePage.vue'
+import ShareImagePage from './pages/ShareImagePage.vue'
 import TransferPage from './pages/TransferPage.vue'
 import PaymentPage from './pages/PaymentPage.vue'
 import WechatEntryPage from './pages/WechatEntryPage.vue'
@@ -40,6 +41,12 @@ const routes = [
     path: '/share/:id',
     name: 'SharePage',
     component: SharePage
+  },
+  {
+    path: '/share-image/:id',
+    name: 'ShareImagePage',
+    component: ShareImagePage,
+    meta: { title: '生成分享图片' }
   },
   {
     path: '/transfer/:id',
