@@ -7,25 +7,25 @@
           <circle cx="30" cy="30" r="29" fill="#09BB07"/>
           <path d="M16 30L26 40L44 22" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
+        </div>
       </div>
-    </div>
-    
+      
     <!-- 成功文字 -->
     <div class="success-title">收款成功</div>
     
     <!-- 金额显示 -->
     <div class="amount-section">
       <div class="amount-value">¥{{ transferData.actualAmount ? transferData.actualAmount.toFixed(2) : '0.00' }}</div>
-    </div>
-    
+        </div>
+        
     <!-- 收款方式 -->
     <div class="payment-method">
       <span class="method-icon">💰</span>
       <span class="method-text">零钱</span>
-    </div>
-    
+      </div>
+      
     <!-- 底部按钮 -->
-    <div class="action-buttons">
+      <div class="action-buttons">
       <button class="primary-button" @click="goBack">
         完成
       </button>
@@ -40,11 +40,11 @@ import axios from 'axios';
 
 const router = useRouter();
 const route = useRoute();
-
-const transferData = ref({
-  id: '',
-  actualAmount: 0.1,
-  senderName: '张三',
+    
+    const transferData = ref({
+      id: '',
+      actualAmount: 0.1,
+      senderName: '张三',
   message: ''
 });
 
@@ -59,10 +59,10 @@ const fetchTransferInfo = async () => {
     
     if (isSuccess && data) {
       transferData.value = data;
-    }
-  } catch (error) {
+          }
+        } catch (error) {
     console.error('获取转账信息失败:', error);
-  }
+        }
 };
 
 // 返回
@@ -164,12 +164,12 @@ onMounted(() => {
 @media (max-width: 375px) {
   .wechat-success-page {
     padding-top: 100px;
-  }
-  
+}
+
   .amount-value {
     font-size: 42px;
-  }
-  
+}
+
   .success-title {
     font-size: 18px;
   }
@@ -178,12 +178,12 @@ onMounted(() => {
 @media (max-width: 320px) {
   .amount-value {
     font-size: 36px;
-  }
-  
+}
+
   .primary-button {
     height: 46px;
     font-size: 16px;
-  }
+}
 }
 
 @media (min-width: 414px) {

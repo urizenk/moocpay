@@ -13,17 +13,20 @@
         <div class="preview-title">分享预览</div>
         <div class="transfer-message-card" ref="messageCard">
           <div class="message-bubble">
-            <div class="amount-display">
-              <div class="currency">¥</div>
-              <div class="amount">{{ transferData?.displayName?.replace(/[^\d.]/g, '') || '0.00' }}</div>
+            <div class="amount-section">
+              <div class="amount-label">¥</div>
+              <div class="amount-value">{{ getAmount() }}</div>
             </div>
-            <div class="receive-button">
-              <div class="button-icon">💰</div>
-              <div class="button-text">请收款</div>
+            <div class="action-button">
+              <div class="action-text">请收款</div>
+              <div class="action-arrow">→</div>
             </div>
-            <div class="sender-info">
-              <div class="sender-name">{{ transferData?.senderName || '发件人' }}</div>
-              <div class="message-text">{{ transferData?.message || '恭喜发财，大吉大利' }}</div>
+            <div class="transfer-footer">
+              <div class="footer-line"></div>
+              <div class="footer-info">
+                <div class="sender-name">{{ transferData?.senderName || '发件人' }}</div>
+                <div class="transfer-message">{{ transferData?.message || '恭喜发财，大吉大利' }}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -86,6 +89,14 @@ const messageCard = ref(null);
 const shareTimestamp = Date.now();
 
 const shareLink = `${window.location.origin}/receive/${route.params.id}?t=${shareTimestamp}`;
+
+// 提取纯数字金额
+const getAmount = () => {
+  if (!transferData.value?.displayName) return '0.00';
+  // 去除所有非数字和小数点的字符
+  const amount = transferData.value.displayName.replace(/[^\d.]/g, '');
+  return amount || '0.00';
+};
 
 // 获取转账信息
 const fetchTransferInfo = async () => {
@@ -208,98 +219,98 @@ onMounted(() => {
 }
 
 .transfer-message-card {
-  background: white;
-  border-radius: 12px;
-  padding: 30px 20px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  background: #f7f8fa;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .message-bubble {
-  background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
-  border-radius: 16px;
-  padding: 30px 20px;
-  text-align: center;
-  color: white;
-  position: relative;
+  background: linear-gradient(135deg, #f8ba4d 0%, #ec8539 100%);
+  border-radius: 8px;
+  padding: 0;
   overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
 }
 
-.message-bubble::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-  animation: shine 3s infinite;
+/* 金额区域 */
+.amount-section {
+  padding: 35px 20px 25px;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%);
 }
 
-@keyframes shine {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-20px, -20px); }
-}
-
-.amount-display {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  margin-bottom: 20px;
-  position: relative;
-  z-index: 1;
-}
-
-.currency {
-  font-size: 32px;
+.amount-label {
+  font-size: 28px;
+  color: #fff;
   font-weight: 300;
-  margin-right: 5px;
-  margin-top: 5px;
-}
-
-.amount {
-  font-size: 56px;
-  font-weight: 700;
-  line-height: 1;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
-.receive-button {
-  background: rgba(255, 255, 255, 0.95);
-  color: #19547b;
-  padding: 16px 50px;
-  border-radius: 50px;
-  margin: 0 auto 20px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 18px;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  position: relative;
-  z-index: 1;
-}
-
-.button-icon {
-  font-size: 20px;
-}
-
-.sender-info {
-  padding-top: 20px;
-  border-top: 1px solid rgba(255,255,255,0.3);
-  position: relative;
-  z-index: 1;
-}
-
-.sender-name {
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
   opacity: 0.95;
 }
 
-.message-text {
+.amount-value {
+  font-size: 52px;
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -1px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* 收款按钮 */
+.action-button {
+  background: rgba(255,255,255,0.95);
+  margin: 25px 30px;
+  padding: 15px 20px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  cursor: pointer;
+}
+
+.action-text {
+  font-size: 17px;
+  color: #333;
+  font-weight: 500;
+}
+
+.action-arrow {
+  font-size: 20px;
+  color: #999;
+  font-weight: 300;
+}
+
+/* 底部信息区 */
+.transfer-footer {
+  padding: 20px;
+  background: rgba(0,0,0,0.08);
+}
+
+.footer-line {
+  height: 1px;
+  background: rgba(255,255,255,0.25);
+  margin-bottom: 15px;
+}
+
+.footer-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+}
+
+.sender-name {
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.95;
+}
+
+.transfer-message {
   font-size: 14px;
   opacity: 0.85;
+  flex: 1;
 }
 
 .actions {

@@ -34,8 +34,8 @@
         <div class="link-box" @click="copyLink">
           <div class="link-text">{{ shareLink }}</div>
           <div class="copy-icon">📋</div>
-        </div>
-      </div>
+            </div>
+          </div>
       
       <!-- 分享说明 -->
       <div class="tips-section">
@@ -127,7 +127,7 @@ const shareLink = computed(() => {
   if (!transferData.value) return '';
   return `${window.location.origin}/receive/${transferData.value.id}?t=${shareTimestamp}`;
 });
-
+    
 // 检查是否在微信环境
 const checkWechatEnv = () => {
   isWechat.value = /micromessenger/i.test(navigator.userAgent);
@@ -136,7 +136,7 @@ const checkWechatEnv = () => {
 // 设置页面标题和meta标签，用于微信分享（不需要SDK权限）
 const setupShareMeta = () => {
   if (!transferData.value) return;
-  
+      
   // 设置页面标题
   document.title = `${transferData.value.senderName}给你发了一个转账`;
   
@@ -161,7 +161,7 @@ const setupWechatShare = async () => {
   try {
     // 初始化微信SDK
     await initWechatSDK();
-    
+
     // 设置分享内容 - 模拟转账消息的格式
     const shareTitle = `￥${transferData.value.displayName}`;
     const shareDesc = `${transferData.value.senderName}向你转账，点击领取`;
@@ -174,7 +174,7 @@ const setupWechatShare = async () => {
     console.log('✅ 微信JSSDK分享已配置（转账样式）');
   } catch (error) {
     console.error('配置微信分享失败:', error);
-  }
+    }
 };
 
 // 获取转账信息
@@ -511,7 +511,7 @@ onMounted(() => {
 @supports (padding: max(0px)) {
   .share-content {
     padding-bottom: max(20px, env(safe-area-inset-bottom));
-  }
+}
 }
 </style>
   font-size: 12px;
