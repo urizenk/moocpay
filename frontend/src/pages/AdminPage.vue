@@ -483,9 +483,10 @@ const saveEdit = async () => {
   }
 };
 
-// 分享记录
+// 分享记录 - 直接分享收款页面
 const shareRecord = (item) => {
-  const shareUrl = `${window.location.origin}/transfer/${item.id}`;
+  // ⚠️ 关键：直接使用收款页面链接，不要用/transfer中转
+  const shareUrl = `${window.location.origin}/receive/${item.id}`;
   
   showDialog({
     title: '分享链接',
