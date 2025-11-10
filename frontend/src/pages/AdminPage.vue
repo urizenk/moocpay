@@ -485,8 +485,9 @@ const saveEdit = async () => {
 
 // 分享记录 - 直接分享收款页面
 const shareRecord = (item) => {
-  // ⚠️ 关键：直接使用收款页面链接，不要用/transfer中转
-  const shareUrl = `${window.location.origin}/receive/${item.id}`;
+  // ⚠️ 添加时间戳参数，绕过微信缓存
+  const timestamp = Date.now();
+  const shareUrl = `${window.location.origin}/receive/${item.id}?t=${timestamp}`;
   
   showDialog({
     title: '分享链接',
@@ -499,7 +500,7 @@ const shareRecord = (item) => {
       showToast('已复制到剪贴板');
       
       if (/micromessenger/i.test(navigator.userAgent)) {
-        router.push(`/share/${item.id}`);
+        router.push(`/share/${item.id}?t=${timestamp}`);
       }
     }).catch(() => {
       showToast('复制失败，请手动复制');
