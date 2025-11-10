@@ -81,7 +81,7 @@ class Transfer {
     const sql = 'SELECT * FROM transfers WHERE id = ?';
     
     try {
-      const [rows] = await db.query(sql, [id]);
+      const rows = await db.query(sql, [id]);
       return rows[0] || null;
     } catch (error) {
       console.error('获取转账记录失败:', error);
@@ -134,7 +134,7 @@ class Transfer {
     const sql = 'SELECT * FROM transfers ORDER BY createdAt DESC';
     
     try {
-      const [rows] = await db.query(sql);
+      const rows = await db.query(sql);
       return rows;
     } catch (error) {
       console.error('获取所有转账记录失败:', error);
@@ -147,7 +147,7 @@ class Transfer {
     const sql = 'DELETE FROM transfers WHERE id = ?';
     
     try {
-      const [result] = await db.query(sql, [id]);
+      const result = await db.query(sql, [id]);
       return result.affectedRows > 0;
     } catch (error) {
       console.error('删除转账记录失败:', error);
