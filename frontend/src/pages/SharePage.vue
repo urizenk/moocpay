@@ -207,20 +207,9 @@ const setupWechatShare = () => {
     });
   }
   
-  // 旧版API（兼容）
+  // 旧版API（兼容）- 不设置任何回调，避免弹窗
   if (typeof wx !== 'undefined' && wx.onMenuShareAppMessage) {
-    wx.onMenuShareAppMessage({
-      ...shareData,
-      success: () => {
-        console.log('✅ 旧版API分享成功');
-      },
-      cancel: () => {
-        console.log('⚠️ 用户取消分享');
-      },
-      fail: (err) => {
-        console.error('❌ 旧版API失败:', err);
-      }
-    });
+    wx.onMenuShareAppMessage(shareData);
   }
   
   // 隐藏分享到朋友圈
