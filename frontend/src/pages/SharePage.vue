@@ -60,11 +60,25 @@
         </div>
       </div>
       
+      <!-- 预览模拟页面按钮 -->
+      <div class="action-section">
+        <van-button 
+          type="success" 
+          block 
+          round 
+          icon="eye-o"
+          @click="previewReceivePage"
+          class="preview-button"
+        >
+          👁️ 预览收款页面
+        </van-button>
+      </div>
+      
       <!-- 快捷分享按钮（仅微信环境） -->
       <div class="action-section" v-if="isWechat">
         <div class="wechat-notice">
           <div class="notice-icon">💡</div>
-          <div class="notice-text">请点击右上角"⋯"选择"发送给朋友"进行分享</div>
+          <div class="notice-text">预览确认无误后，点击右上角"⋯"选择"发送给朋友"进行分享</div>
         </div>
       </div>
       
@@ -79,7 +93,7 @@
         >
           复制链接
         </van-button>
-        <div class="non-wechat-tip">请在微信中打开此链接以使用分享功能</div>
+        <div class="non-wechat-tip">预览确认后，请在微信中打开链接分享给好友</div>
       </div>
     </div>
   </div>
