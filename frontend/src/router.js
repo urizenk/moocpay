@@ -7,6 +7,7 @@ import TransferPage from './pages/TransferPage.vue'
 import PaymentPage from './pages/PaymentPage.vue'
 import WechatEntryPage from './pages/WechatEntryPage.vue'
 import DebugPage from './pages/DebugPage.vue'
+import WechatDiagPage from './pages/WechatDiagPage.vue'
 
 const routes = [
   {
@@ -18,6 +19,11 @@ const routes = [
     path: '/debug',
     name: 'DebugPage',
     component: DebugPage
+  },
+  {
+    path: '/wechat-diag/:id',
+    name: 'WechatDiagPage',
+    component: WechatDiagPage
   },
   {
     path: '/entry',
