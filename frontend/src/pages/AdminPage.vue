@@ -89,6 +89,14 @@
     <div class="records-section">
       <div class="section-title">| 我的转账记录（共{{ records.length }}条）</div>
       
+      <!-- 调试信息 -->
+      <div v-if="records.length === 0" style="padding: 20px; text-align: center; color: #999;">
+        <div>🔍 调试信息</div>
+        <div>records数组长度: {{ records.length }}</div>
+        <div>loading: {{ loading }}</div>
+        <div>finished: {{ finished }}</div>
+      </div>
+      
       <!-- 直接渲染，不使用van-list -->
       <div class="records-container">
         <div class="record-item" v-for="item in records" :key="item.id">
@@ -364,35 +372,52 @@ const createTransfer = async () => {
 // 加载转账记录
 const loadRecords = async () => {
   try {
-    console.log('开始加载转账记录...');
+    console.log('========== 开始加载转账记录 ==========');
     const response = await axios.get('/api/transfers');
-    console.log('API响应:', response.data);
+    console.log('1. 原始API响应:', JSON.stringify(response.data, null, 2));
     
-    const data = response.data?.data || response.data;
-    console.log('解析后的data:', data);
+    // 确保获取正确的data对象
+    let data = null;
+    if (response.data && response.data.data) {
+      data = response.data.data;
+      console.log('2. 提取data对象:', JSON.stringify(data, null, 2));
+    } else {
+      data = response.data;
+      console.log('2. 直接使用response.data:', JSON.stringify(data, null, 2));
+    }
     
     // 处理返回的数据结构
     let transferList = [];
     if (Array.isArray(data)) {
+      // 如果data本身就是数组
       transferList = data;
-    } else if (data && Array.isArray(data.list)) {
+      console.log('3. data是数组，直接使用');
+    } else if (data && data.list && Array.isArray(data.list)) {
+      // 如果data有list属性且是数组
       transferList = data.list;
+      console.log('3. data.list是数组，使用data.list');
     } else {
-      console.warn('未识别的数据格式:', data);
+      console.error('3. ❌ 未识别的数据格式:', data);
     }
     
-    console.log('转账列表:', transferList);
+    console.log('4. 转账列表长度:', transferList.length);
+    console.log('5. 转账列表内容:', JSON.stringify(transferList, null, 2));
     
+    // 按时间倒序排序
     records.value = transferList.sort((a, b) => {
       return new Date(b.createdAt) - new Date(a.createdAt);
     });
     
-    console.log('最终records.value:', records.value);
+    console.log('6. ✅ 最终records.value长度:', records.value.length);
+    console.log('7. ✅ 最终records.value:', records.value);
+    console.log('========== 加载完成 ==========');
     
     loading.value = false;
     finished.value = true;
   } catch (error) {
-    console.error('加载转账记录失败:', error);
+    console.error('❌ 加载转账记录失败:', error);
+    console.error('错误详情:', error.response?.data);
+    showToast('加载失败:' + error.message);
     loading.value = false;
     finished.value = true;
   }
