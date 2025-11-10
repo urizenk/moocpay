@@ -202,15 +202,15 @@ const getButtonText = () => {
     case 'redpacket':
       return '开';
     case 'business':
-      return '立即支付';
+      return '确认收款';
     case 'payment':
-      return '立即支付';
+      return '收款';
     case 'wallet':
-      return '立即支付';
+      return '转入零钱通';
     case 'reward':
       return '领取';
     default:
-      return '立即支付';
+      return '收款';
   }
 };
 
@@ -222,15 +222,15 @@ const getTipsText = () => {
     case 'redpacket':
       return '24小时内未领取，红包将退回';
     case 'business':
-      return `您将向${transferData.value.senderName}支付 ¥${transferData.value.actualAmount.toFixed(2)}`;
+      return '请确认转账信息无误后收款';
     case 'payment':
-      return `实际支付金额：¥${transferData.value.actualAmount.toFixed(2)}`;
+      return '1天内未确认，将退还给对方';
     case 'wallet':
-      return `您将向${transferData.value.senderName}支付 ¥${transferData.value.actualAmount.toFixed(2)}`;
+      return '转入零钱通，享受稳健收益';
     case 'reward':
       return '奖励有效期24小时';
     default:
-      return `实际支付金额：¥${transferData.value.actualAmount.toFixed(2)}`;
+      return '1天内未确认，将退还给对方';
   }
 };
 
@@ -318,58 +318,29 @@ const handleReceive = async () => {
     if (result.success) {
       const { paymentParams } = result.data;
       
-      // 检查是否模拟支付
-      if (paymentParams.mock) {
-        // 开发环境：模拟支付
-        closeToast();
-        const mockResponse = await axios.post('/api/payment/mock-success', {
-          paymentId: paymentParams.paymentId
-        }, {
-          withCredentials: true
-        });
-        
-        if (mockResponse.data.success) {
-          showToast('支付成功');
-          setTimeout(() => {
-            router.push(`/success/${transferData.value.id}`);
-          }, 1000);
-        }
-        return;
-      }
-      
-      // 生产环境：调用微信支付
+      // 企业付款成功
       closeToast();
       
-      if (typeof window.WeixinJSBridge !== 'undefined') {
-        window.WeixinJSBridge.invoke('getBrandWCPayRequest', paymentParams, (res) => {
-          if (res.err_msg === 'get_brand_wcpay_request:ok') {
-            // 支付成功
-            showToast('支付成功');
-            setTimeout(() => {
-              router.push(`/success/${transferData.value.id}`);
-            }, 1000);
-          } else if (res.err_msg === 'get_brand_wcpay_request:cancel') {
-            showToast('您已取消支付');
-          } else {
-            showToast('支付失败，请重试');
+      if (result.data.transferSuccess) {
+        // 转账成功
+        showToast({
+          message: '收款成功',
+          duration: 2000
+        });
+        
+        // 更新本地状态
+        transferData.value.status = 'received';
+        
+        // 微信会自动显示转账通知，不需要跳转
+        // 如果需要，可以在2秒后返回管理后台或刷新
+        setTimeout(() => {
+          // 停止自动刷新
+          if (refreshInterval) {
+            clearInterval(refreshInterval);
           }
-        });
+        }, 2000);
       } else {
-        // 等待微信JSAPI加载
-        document.addEventListener('WeixinJSBridgeReady', () => {
-          window.WeixinJSBridge.invoke('getBrandWCPayRequest', paymentParams, (res) => {
-            if (res.err_msg === 'get_brand_wcpay_request:ok') {
-              showToast('支付成功');
-              setTimeout(() => {
-                router.push(`/success/${transferData.value.id}`);
-              }, 1000);
-            } else if (res.err_msg === 'get_brand_wcpay_request:cancel') {
-              showToast('您已取消支付');
-            } else {
-              showToast('支付失败，请重试');
-            }
-          });
-        });
+        showToast('转账处理中，请稍候');
       }
     } else {
       closeToast();
