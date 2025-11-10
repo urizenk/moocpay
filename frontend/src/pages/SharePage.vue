@@ -162,20 +162,34 @@ const initWechatSDK = async () => {
 
 // 设置微信分享内容
 const setupWechatShare = () => {
-  if (!transferData.value) return;
+  if (!transferData.value) {
+    console.error('setupWechatShare: transferData为空');
+    return;
+  }
+  
+  // 关键：微信分享的链接必须是收款页面，而不是分享页面！
+  const receivePageUrl = `${window.location.origin}/receive/${transferData.value.id}`;
   
   const shareData = {
     title: '微信转账',
     desc: `${transferData.value.senderName}向你转账${transferData.value.displayName}`,
-    link: shareLink.value,
+    link: receivePageUrl,  // 使用收款页面URL
     imgUrl: transferData.value.senderAvatar || window.location.origin + '/logo.svg'
   };
   
-  // 分享给朋友
+  console.log('===== 微信分享配置 =====');
+  console.log('分享链接:', receivePageUrl);
+  console.log('分享数据:', shareData);
+  
+  // 分享给朋友（新版API）
   wx.updateAppMessageShareData({
     ...shareData,
     success: () => {
-      console.log('分享成功');
+      console.log('✅ 分享配置成功（新版API）');
+      console.log('分享链接:', receivePageUrl);
+    },
+    fail: (err) => {
+      console.error('❌ 分享配置失败（新版API）:', err);
     }
   });
   
@@ -183,7 +197,10 @@ const setupWechatShare = () => {
   wx.onMenuShareAppMessage({
     ...shareData,
     success: () => {
-      console.log('分享成功（旧版API）');
+      console.log('✅ 分享成功（旧版API）');
+    },
+    fail: (err) => {
+      console.error('❌ 分享失败（旧版API）:', err);
     }
   });
   
