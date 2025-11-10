@@ -6,12 +6,18 @@ import SharePage from './pages/SharePage.vue'
 import TransferPage from './pages/TransferPage.vue'
 import PaymentPage from './pages/PaymentPage.vue'
 import WechatEntryPage from './pages/WechatEntryPage.vue'
+import DebugPage from './pages/DebugPage.vue'
 
 const routes = [
   {
     path: '/',
     name: 'AdminPage',
     component: AdminPage
+  },
+  {
+    path: '/debug',
+    name: 'DebugPage',
+    component: DebugPage
   },
   {
     path: '/entry',
