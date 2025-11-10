@@ -358,19 +358,71 @@ const goBack = () => {
   router.go(-1);
 };
 
-// 格式化日期时间
+// 格式化日期时间（微信真实格式）
 const formatDateTime = (datetime) => {
   if (!datetime) return '';
   
   const date = new Date(datetime);
+  const now = new Date();
+  const diff = now - date;
+  const diffMinutes = Math.floor(diff / 60000);
+  const diffHours = Math.floor(diff / 3600000);
+  const diffDays = Math.floor(diff / 86400000);
+  
+  // 1分钟内显示"刚刚"
+  if (diffMinutes < 1) {
+    return '刚刚';
+  }
+  
+  // 60分钟内显示"X分钟前"
+  if (diffMinutes < 60) {
+    return `${diffMinutes}分钟前`;
+  }
+  
+  // 24小时内显示"X小时前"
+  if (diffHours < 24) {
+    return `${diffHours}小时前`;
+  }
+  
+  // 判断是否是今天
+  const isToday = date.getDate() === now.getDate() &&
+                  date.getMonth() === now.getMonth() &&
+                  date.getFullYear() === now.getFullYear();
+  
+  // 判断是否是昨天
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = date.getDate() === yesterday.getDate() &&
+                      date.getMonth() === yesterday.getMonth() &&
+                      date.getFullYear() === yesterday.getFullYear();
+  
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  
+  if (isToday) {
+    return `今天 ${hours}:${minutes}`;
+  }
+  
+  if (isYesterday) {
+    return `昨天 ${hours}:${minutes}`;
+  }
+  
+  // 7天内显示"X天前"
+  if (diffDays < 7) {
+    return `${diffDays}天前`;
+  }
+  
+  // 超过7天显示完整日期
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
   
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  // 同一年不显示年份
+  if (date.getFullYear() === now.getFullYear()) {
+    return `${month}-${day} ${hours}:${minutes}`;
+  }
+  
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
 };
 
 let refreshInterval;
