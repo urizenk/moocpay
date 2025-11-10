@@ -240,6 +240,16 @@ const goBack = () => {
   router.push('/admin');
 };
 
+// 预览收款页面
+const previewReceivePage = () => {
+  if (transferData.value) {
+    // 跳转到收款页面预览
+    router.push(`/receive/${transferData.value.id}`);
+  } else {
+    showToast('转账信息不存在');
+  }
+};
+
 onMounted(() => {
   checkWechatEnv();
   fetchTransferInfo();
