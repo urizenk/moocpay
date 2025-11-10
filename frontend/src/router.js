@@ -8,6 +8,7 @@ import PaymentPage from './pages/PaymentPage.vue'
 import WechatEntryPage from './pages/WechatEntryPage.vue'
 import DebugPage from './pages/DebugPage.vue'
 import WechatDiagPage from './pages/WechatDiagPage.vue'
+import SimpleShareTest from './pages/SimpleShareTest.vue'
 
 const routes = [
   {
@@ -24,6 +25,11 @@ const routes = [
     path: '/wechat-diag/:id',
     name: 'WechatDiagPage',
     component: WechatDiagPage
+  },
+  {
+    path: '/share-test',
+    name: 'SimpleShareTest',
+    component: SimpleShareTest
   },
   {
     path: '/entry',

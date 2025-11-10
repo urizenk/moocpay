@@ -23,6 +23,14 @@
       >
         数据诊断
       </van-button>
+      <van-button 
+        type="primary" 
+        size="small" 
+        icon="share-o"
+        @click="router.push('/share-test')"
+      >
+        微信分享测试
+      </van-button>
     </div>
     
     <!-- 创建新转账表单 -->
