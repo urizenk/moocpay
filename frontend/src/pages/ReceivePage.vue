@@ -1,28 +1,29 @@
 <template>
-  <div class="wechat-receive-page" :data-theme="currentTheme.id" :style="themeStyles">
-    <!-- 顶部导航栏 -->
+  <div class="wechat-receive-page">
+    <!-- 顶部返回按钮 -->
     <div class="header-bar">
-      <div class="close-btn" @click="goBack">×</div>
-      <div class="domain-text">{{ siteDomain }}</div>
-      <div class="menu-btn">⋯</div>
+      <div class="back-btn" @click="goBack">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M15 18L9 12L15 6" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
     </div>
-    
-    <!-- 红包主题特殊背景 -->
-    <div v-if="currentTheme.id === 'redpacket'" class="redpacket-bg"></div>
     
     <!-- 主内容区域 -->
     <div class="main-content">
-      <!-- 时钟/图标 -->
+      <!-- 蓝色时钟图标 -->
       <div class="icon-wrapper">
-        <div class="main-icon" :class="`icon-${currentTheme.id}`">
-          <component :is="getIconComponent()" />
+        <div class="clock-icon">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="30" stroke="#1AAD19" stroke-width="3"/>
+            <line x1="32" y1="32" x2="32" y2="16" stroke="#1AAD19" stroke-width="3" stroke-linecap="round"/>
+            <line x1="32" y1="32" x2="42" y2="32" stroke="#1AAD19" stroke-width="3" stroke-linecap="round"/>
+          </svg>
         </div>
       </div>
       
       <!-- 状态文字 -->
-      <div class="status-text" :class="`status-${currentTheme.id}`">
-        {{ getStatusText() }}
-      </div>
+      <div class="status-text">待你收款</div>
       
       <!-- 金额显示 -->
       <div class="amount-wrapper">
@@ -33,13 +34,7 @@
       <!-- 转账时间 -->
       <div class="time-row">
         <span class="time-label">转账时间</span>
-        <span class="time-spacing">　　　　</span>
         <span class="time-value">{{ formatDateTime(transferData.createdAt) }}</span>
-      </div>
-      
-      <!-- 主题特殊元素 -->
-      <div v-if="currentTheme.id === 'redpacket'" class="redpacket-wish">
-        恭喜发财，大吉大利
       </div>
     </div>
     
@@ -48,24 +43,24 @@
       <!-- 收款按钮 -->
       <button 
         class="receive-btn"
-        :class="{ 'frozen': transferData.accountStatus === 'frozen' }"
+        :class="{ 'disabled': transferData.accountStatus === 'frozen' || transferData.status !== 'pending' }"
         @click="handleReceive"
         :disabled="transferData.accountStatus === 'frozen' || transferData.status !== 'pending'"
       >
-        {{ getButtonText() }}
+        收款
       </button>
       
       <!-- 提示文字 -->
-      <div class="tips-row">
-        <span class="tips-text">{{ getTipsText() }}</span>
+      <div class="tips-text">
+        1天内未确认，将退还给对方。<span class="link-text">退还</span>
       </div>
     </div>
     
     <!-- 冻结提示弹窗 -->
     <div class="freeze-dialog" v-if="showFreezeDialog" @click="showFreezeDialog = false">
       <div class="dialog-content" @click.stop>
-        <div class="dialog-title">{{ siteDomain }}</div>
-        <div class="dialog-message">资金涉嫌赌博，已被冻结</div>
+        <div class="dialog-title">提示</div>
+        <div class="dialog-message">该转账已被冻结，暂时无法收款</div>
         <div class="dialog-btn" @click="showFreezeDialog = false">确定</div>
       </div>
     </div>
@@ -73,17 +68,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, h } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { showToast, showLoadingToast, closeToast } from 'vant';
 import axios from 'axios';
-import { getTheme } from '@/styles/themes';
 import { getWechatOpenId, isWechatBrowser } from '@/utils/wechatAuth';
 
 const router = useRouter();
 const route = useRoute();
 
-const siteDomain = ref(window.location.hostname || 'qqiwxi.nmmbz.cn');
 const showFreezeDialog = ref(false);
 
 const transferData = ref({
@@ -99,140 +92,6 @@ const transferData = ref({
   createdAt: new Date().toISOString(),
   updatedAt: null
 });
-
-// 当前主题
-const currentTheme = computed(() => getTheme(transferData.value.theme));
-
-// 主题样式
-const themeStyles = computed(() => {
-  const theme = currentTheme.value;
-  return {
-    '--theme-primary': theme.colors.primary,
-    '--theme-primary-light': theme.colors.primaryLight,
-    '--theme-gradient': theme.colors.gradient,
-    '--theme-shadow': theme.colors.shadow,
-    '--theme-icon-bg': theme.colors.iconBg,
-    '--theme-text': theme.colors.text,
-    '--theme-text-secondary': theme.colors.textSecondary,
-    '--theme-bg': theme.colors.bg,
-    '--theme-card-bg': theme.colors.cardBg,
-    '--theme-button-radius': theme.styles.buttonRadius,
-    '--theme-card-radius': theme.styles.cardRadius,
-    '--theme-icon-size': theme.styles.iconSize
-  };
-});
-
-// 根据主题获取图标组件
-const getIconComponent = () => {
-  const theme = currentTheme.value.id;
-  
-  switch(theme) {
-    case 'redpacket':
-      return h('div', { class: 'redpacket-icon' }, '🧧');
-    case 'business':
-      return h('div', { class: 'business-icon' }, '🏢');
-    case 'payment':
-      return h('div', { class: 'payment-icon' }, '💳');
-    case 'wallet':
-      return h('div', { class: 'wallet-icon' }, '💰');
-    case 'reward':
-      return h('div', { class: 'reward-icon' }, '🎁');
-    default:
-      // 经典转账 - 时钟图标
-      return h('svg', {
-        width: '48',
-        height: '48',
-        viewBox: '0 0 48 48',
-        fill: 'none'
-      }, [
-        h('circle', {
-          cx: '24',
-          cy: '24',
-          r: '23',
-          stroke: '#b2b2b2',
-          'stroke-width': '2'
-        }),
-        h('line', {
-          x1: '24',
-          y1: '24',
-          x2: '24',
-          y2: '12',
-          stroke: '#b2b2b2',
-          'stroke-width': '2',
-          'stroke-linecap': 'round'
-        }),
-        h('line', {
-          x1: '24',
-          y1: '24',
-          x2: '32',
-          y2: '24',
-          stroke: '#b2b2b2',
-          'stroke-width': '2',
-          'stroke-linecap': 'round'
-        })
-      ]);
-  }
-};
-
-// 根据主题获取状态文字
-const getStatusText = () => {
-  const theme = currentTheme.value.id;
-  
-  switch(theme) {
-    case 'redpacket':
-      return '恭喜发财';
-    case 'business':
-      return '待你确认';
-    case 'payment':
-      return '待你收款';
-    case 'wallet':
-      return '待你转入';
-    case 'reward':
-      return '待你领取';
-    default:
-      return '待你收款';
-  }
-};
-
-// 根据主题获取按钮文字
-const getButtonText = () => {
-  const theme = currentTheme.value.id;
-  
-  switch(theme) {
-    case 'redpacket':
-      return '开';
-    case 'business':
-      return '确认收款';
-    case 'payment':
-      return '收款';
-    case 'wallet':
-      return '转入零钱通';
-    case 'reward':
-      return '领取';
-    default:
-      return '收款';
-  }
-};
-
-// 根据主题获取提示文字
-const getTipsText = () => {
-  const theme = currentTheme.value.id;
-  
-  switch(theme) {
-    case 'redpacket':
-      return '24小时内未领取，红包将退回';
-    case 'business':
-      return '请确认转账信息无误后收款';
-    case 'payment':
-      return '1天内未确认，将退还给对方';
-    case 'wallet':
-      return '转入零钱通，享受稳健收益';
-    case 'reward':
-      return '奖励有效期24小时';
-    default:
-      return '1天内未确认，将退还给对方';
-  }
-};
 
 // 计算显示金额
 const displayAmount = computed(() => {
@@ -267,7 +126,7 @@ const fetchTransferInfo = async () => {
   }
 };
 
-// 处理收款 - 直接调用微信支付
+// 处理收款 - 触发企业付款
 const handleReceive = async () => {
   if (transferData.value.accountStatus === 'frozen') {
     showFreezeDialog.value = true;
@@ -279,17 +138,16 @@ const handleReceive = async () => {
     return;
   }
   
-  // 检查是否在微信环境
   const isWechat = isWechatBrowser();
   
   showLoadingToast({
-    message: '正在创建支付订单...',
+    message: '正在处理...',
     forbidClick: true,
     duration: 0
   });
   
   try {
-    // 获取 OpenID（生产环境需要）
+    // 获取 OpenID
     let userOpenId = null;
     if (isWechat && process.env.NODE_ENV === 'production') {
       userOpenId = await getWechatOpenId({
@@ -298,53 +156,41 @@ const handleReceive = async () => {
       });
       
       if (!userOpenId) {
-        // 正在跳转授权
         return;
       }
     }
     
-    // 创建支付订单
+    // 调用企业付款接口
     const response = await axios.post('/api/payment/create', {
       transferId: transferData.value.id,
       amount: transferData.value.actualAmount,
-      description: `向${transferData.value.senderName}转账`,
+      description: `向你转账`,
       openid: userOpenId
     }, {
       withCredentials: true
     });
     
     const result = response.data;
+    closeToast();
     
-    if (result.success) {
-      const { paymentParams } = result.data;
-      
+    if (result.success && result.data.transferSuccess) {
       // 企业付款成功
-      closeToast();
+      showToast({
+        message: '收款成功',
+        duration: 2000
+      });
       
-      if (result.data.transferSuccess) {
-        // 转账成功
-        showToast({
-          message: '收款成功',
-          duration: 2000
-        });
-        
-        // 更新本地状态
-        transferData.value.status = 'received';
-        
-        // 微信会自动显示转账通知，不需要跳转
-        // 如果需要，可以在2秒后返回管理后台或刷新
-        setTimeout(() => {
-          // 停止自动刷新
-          if (refreshInterval) {
-            clearInterval(refreshInterval);
-          }
-        }, 2000);
-      } else {
-        showToast('转账处理中，请稍候');
+      // 更新本地状态
+      transferData.value.status = 'received';
+      
+      // 停止自动刷新
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
       }
+      
+      // 微信会自动显示转账通知和成功页面，我们不需要跳转
     } else {
-      closeToast();
-      showToast(result.message || '创建支付订单失败');
+      showToast(result.message || '收款失败');
     }
   } catch (error) {
     closeToast();
@@ -358,71 +204,20 @@ const goBack = () => {
   router.go(-1);
 };
 
-// 格式化日期时间（微信真实格式）
+// 格式化日期时间（微信官方格式）
 const formatDateTime = (datetime) => {
   if (!datetime) return '';
   
   const date = new Date(datetime);
-  const now = new Date();
-  const diff = now - date;
-  const diffMinutes = Math.floor(diff / 60000);
-  const diffHours = Math.floor(diff / 3600000);
-  const diffDays = Math.floor(diff / 86400000);
-  
-  // 1分钟内显示"刚刚"
-  if (diffMinutes < 1) {
-    return '刚刚';
-  }
-  
-  // 60分钟内显示"X分钟前"
-  if (diffMinutes < 60) {
-    return `${diffMinutes}分钟前`;
-  }
-  
-  // 24小时内显示"X小时前"
-  if (diffHours < 24) {
-    return `${diffHours}小时前`;
-  }
-  
-  // 判断是否是今天
-  const isToday = date.getDate() === now.getDate() &&
-                  date.getMonth() === now.getMonth() &&
-                  date.getFullYear() === now.getFullYear();
-  
-  // 判断是否是昨天
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const isYesterday = date.getDate() === yesterday.getDate() &&
-                      date.getMonth() === yesterday.getMonth() &&
-                      date.getFullYear() === yesterday.getFullYear();
-  
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  
-  if (isToday) {
-    return `今天 ${hours}:${minutes}`;
-  }
-  
-  if (isYesterday) {
-    return `昨天 ${hours}:${minutes}`;
-  }
-  
-  // 7天内显示"X天前"
-  if (diffDays < 7) {
-    return `${diffDays}天前`;
-  }
-  
-  // 超过7天显示完整日期
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
   
-  // 同一年不显示年份
-  if (date.getFullYear() === now.getFullYear()) {
-    return `${month}-${day} ${hours}:${minutes}`;
-  }
-  
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
+  // 微信格式：2025年11月10日 15:08:04
+  return `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`;
 };
 
 let refreshInterval;
@@ -452,74 +247,29 @@ onUnmounted(() => {
 .wechat-receive-page {
   width: 100%;
   min-height: 100vh;
-  background-color: var(--theme-bg);
+  background-color: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  transition: background-color 0.3s;
-  padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* 红包主题背景图案 */
-.redpacket-bg {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0L35 20L55 30L35 40L30 60L25 40L5 30L25 20Z' fill='%23ffe0e0' opacity='0.15'/%3E%3C/svg%3E");
-  background-size: 60px 60px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* 顶部导航栏 */
+/* 顶部返回按钮 */
 .header-bar {
+  padding: 12px 16px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e5e5e5;
-  height: 44px;
-  position: relative;
-  z-index: 10;
 }
 
-.close-btn,
-.menu-btn {
+.back-btn {
   min-width: 44px;
   min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
-  color: #000000;
   cursor: pointer;
-  user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
 
-.close-btn:active,
-.menu-btn:active {
+.back-btn:active {
   opacity: 0.6;
-}
-
-.close-btn {
-  font-weight: 300;
-  padding-bottom: 4px;
-}
-
-.menu-btn {
-  font-size: 24px;
-  letter-spacing: 2px;
-  padding-bottom: 2px;
-}
-
-.domain-text {
-  flex: 1;
-  text-align: center;
-  font-size: 14px;
-  color: #888888;
-  letter-spacing: 0.5px;
 }
 
 /* 主内容区域 */
@@ -527,199 +277,106 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 80px;
-  padding-bottom: 40px;
-  position: relative;
-  z-index: 1;
-  min-height: calc(100vh - 44px - 130px);
+  padding: 60px 20px 40px;
 }
 
 .icon-wrapper {
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 }
 
-.main-icon {
+.clock-icon {
   width: 80px;
   height: 80px;
-  background-color: var(--theme-card-bg);
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  font-size: 48px;
-  transition: all 0.3s;
-}
-
-/* 红包主题图标样式 */
-.icon-redpacket {
-  background: linear-gradient(135deg, #ff6b6b 0%, #f43f3b 100%);
-  box-shadow: 0 4px 16px rgba(244, 63, 59, 0.3);
-  font-size: 52px;
-  animation: redpacketShake 2s infinite;
-}
-
-@keyframes redpacketShake {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-5deg); }
-  75% { transform: rotate(5deg); }
-}
-
-/* 企业主题图标样式 */
-.icon-business {
-  background: linear-gradient(135deg, #4a9ff5 0%, #2b7bd6 100%);
-  box-shadow: 0 4px 12px rgba(43, 123, 214, 0.25);
-  font-size: 44px;
-}
-
-/* 收款码主题图标样式 */
-.icon-payment {
-  background: linear-gradient(135deg, #2aae67 0%, #07c160 100%);
-  box-shadow: 0 4px 12px rgba(7, 193, 96, 0.25);
-  font-size: 44px;
-}
-
-/* 零钱通主题图标样式 */
-.icon-wallet {
-  background: linear-gradient(135deg, #b987d4 0%, #9b59b6 100%);
-  box-shadow: 0 4px 12px rgba(155, 89, 182, 0.25);
-  font-size: 44px;
-}
-
-/* 奖励主题图标样式 */
-.icon-reward {
-  background: linear-gradient(135deg, #ffd700 0%, #d4a574 100%);
-  box-shadow: 0 4px 16px rgba(212, 165, 116, 0.3);
-  font-size: 44px;
-  animation: rewardPulse 2s infinite;
-}
-
-@keyframes rewardPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
 }
 
 .status-text {
-  font-size: 16px;
-  color: var(--theme-text-secondary);
-  margin-bottom: 32px;
-  letter-spacing: 0.5px;
-  transition: color 0.3s;
-}
-
-/* 红包主题状态文字样式 */
-.status-redpacket {
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--theme-text);
+  font-size: 17px;
+  color: #000000;
+  margin-bottom: 24px;
+  font-weight: 400;
 }
 
 .amount-wrapper {
   display: flex;
   align-items: baseline;
-  margin-bottom: 48px;
+  margin-bottom: 40px;
 }
 
 .currency-symbol {
-  font-size: 32px;
-  color: var(--theme-text);
+  font-size: 28px;
+  color: #000000;
   font-weight: 400;
-  margin-right: 4px;
-  line-height: 1;
-  transition: color 0.3s;
+  margin-right: 2px;
 }
 
 .amount-number {
-  font-size: 56px;
-  color: var(--theme-text);
+  font-size: 52px;
+  color: #000000;
   font-weight: 500;
-  line-height: 1;
   letter-spacing: -1px;
-  transition: color 0.3s;
 }
 
 .time-row {
   font-size: 14px;
-  color: var(--theme-text-secondary);
-  letter-spacing: 0.5px;
+  color: #888888;
   display: flex;
   align-items: center;
-  transition: color 0.3s;
+  gap: 40px;
 }
 
-/* 红包祝福语 */
-.redpacket-wish {
-  margin-top: 20px;
-  font-size: 14px;
-  color: #c07850;
-  letter-spacing: 2px;
-  font-weight: 500;
+.time-label {
+  color: #888888;
+}
+
+.time-value {
+  color: #000000;
 }
 
 /* 底部区域 */
 .bottom-section {
-  padding: 0 24px 32px;
-  position: relative;
-  z-index: 1;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px;
+  background-color: #ffffff;
 }
 
 .receive-btn {
   width: 100%;
   height: 50px;
-  background: var(--theme-gradient);
+  background-color: #09BB07;
   border: none;
-  border-radius: var(--theme-button-radius);
+  border-radius: 8px;
   color: #ffffff;
   font-size: 17px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: var(--theme-shadow);
-  letter-spacing: 1px;
-  margin-bottom: 16px;
-}
-
-/* 红包主题按钮特殊样式 */
-[data-theme="redpacket"] .receive-btn {
-  border-radius: 25px;
-  height: 54px;
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: 4px;
-}
-
-/* 企业主题按钮特殊样式 */
-[data-theme="business"] .receive-btn {
-  border-radius: 6px;
-  letter-spacing: 2px;
-}
-
-/* 奖励主题按钮特殊样式 */
-[data-theme="reward"] .receive-btn {
-  border-radius: 12px;
-  font-weight: 600;
-  box-shadow: 0 6px 20px rgba(212, 165, 116, 0.4);
+  margin-bottom: 12px;
 }
 
 .receive-btn:active:not(:disabled) {
-  transform: scale(0.98);
+  background-color: #08A006;
 }
 
-.receive-btn.frozen,
+.receive-btn.disabled,
 .receive-btn:disabled {
-  background: #c8c9cc;
-  box-shadow: none;
+  background-color: #c8c9cc;
   cursor: not-allowed;
-  color: #ffffff;
-  transform: none;
 }
 
-.tips-row {
+.tips-text {
   text-align: center;
   font-size: 12px;
-  color: var(--theme-text-secondary);
-  letter-spacing: 0.3px;
-  transition: color 0.3s;
+  color: #888888;
+  line-height: 1.5;
+}
+
+.link-text {
+  color: #576b95;
 }
 
 /* 冻结提示弹窗 */
@@ -734,12 +391,6 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  animation: fadeIn 0.2s;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 .dialog-content {
@@ -747,18 +398,6 @@ onUnmounted(() => {
   background-color: #ffffff;
   border-radius: 12px;
   overflow: hidden;
-  animation: scaleIn 0.2s;
-}
-
-@keyframes scaleIn {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
 }
 
 .dialog-title {
@@ -784,7 +423,7 @@ onUnmounted(() => {
   justify-content: center;
   border-top: 1px solid #e5e5e5;
   font-size: 17px;
-  color: var(--theme-primary);
+  color: #576b95;
   font-weight: 500;
   cursor: pointer;
 }
@@ -793,33 +432,19 @@ onUnmounted(() => {
   background-color: #f5f5f5;
 }
 
-/* 响应式调整 */
+/* 响应式适配 */
 @media (max-width: 375px) {
   .amount-number {
-    font-size: 48px;
+    font-size: 46px;
   }
   
   .currency-symbol {
-    font-size: 28px;
+    font-size: 26px;
   }
   
-  .main-icon {
+  .clock-icon {
     width: 70px;
     height: 70px;
-  }
-  
-  .main-content {
-    padding-top: 60px;
-  }
-  
-  .receive-btn {
-    height: 46px;
-    font-size: 16px;
-  }
-  
-  [data-theme="redpacket"] .receive-btn {
-    height: 50px;
-    font-size: 18px;
   }
 }
 
@@ -832,61 +457,19 @@ onUnmounted(() => {
     font-size: 24px;
   }
   
-  .status-text {
-    font-size: 14px;
-  }
-  
   .receive-btn {
-    height: 44px;
-    font-size: 15px;
-  }
-  
-  .bottom-section {
-    padding: 0 16px 24px;
+    height: 46px;
+    font-size: 16px;
   }
 }
 
 @media (min-width: 414px) {
   .amount-number {
-    font-size: 64px;
+    font-size: 58px;
   }
   
   .currency-symbol {
-    font-size: 36px;
-  }
-  
-  .receive-btn {
-    height: 54px;
-    font-size: 18px;
-  }
-  
-  [data-theme="redpacket"] .receive-btn {
-    height: 58px;
-    font-size: 22px;
-  }
-}
-
-@media (orientation: landscape) and (max-height: 500px) {
-  .main-content {
-    padding-top: 30px;
-    padding-bottom: 20px;
-  }
-  
-  .icon-wrapper {
-    margin-bottom: 16px;
-  }
-  
-  .status-text {
-    margin-bottom: 20px;
-  }
-  
-  .amount-wrapper {
-    margin-bottom: 30px;
-  }
-  
-  .main-icon {
-    width: 60px;
-    height: 60px;
+    font-size: 30px;
   }
 }
 
@@ -899,14 +482,8 @@ onUnmounted(() => {
 }
 
 @supports (padding: max(0px)) {
-  .header-bar {
-    padding-top: max(10px, env(safe-area-inset-top));
-    padding-left: max(16px, env(safe-area-inset-left));
-    padding-right: max(16px, env(safe-area-inset-right));
-  }
-  
   .bottom-section {
-    padding-bottom: max(32px, env(safe-area-inset-bottom));
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
   }
 }
 </style>
