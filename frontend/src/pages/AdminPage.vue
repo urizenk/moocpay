@@ -13,6 +13,18 @@
       <div class="balance-amount">{{ balance.toFixed(2) }} 元</div>
     </div>
     
+    <!-- 快捷操作按钮 -->
+    <div class="quick-actions">
+      <van-button 
+        type="warning" 
+        size="small" 
+        icon="warning-o"
+        @click="router.push('/debug')"
+      >
+        数据诊断
+      </van-button>
+    </div>
+    
     <!-- 创建新转账表单 -->
     <div class="create-form">
       <div class="form-title">| 创建新转账</div>
@@ -127,6 +139,15 @@
               @click="shareRecord(item)"
             >
               分享
+            </van-button>
+            <van-button 
+              type="warning" 
+              size="small" 
+              round
+              icon="search"
+              @click="diagRecord(item)"
+            >
+              诊断
             </van-button>
             <van-button 
               type="danger" 
@@ -460,6 +481,11 @@ const shareRecord = (item) => {
   }).catch(() => {});
 };
 
+// 诊断记录
+const diagRecord = (item) => {
+  router.push(`/wechat-diag/${item.id}`);
+};
+
 // 撤销记录
 const revokeRecord = (item) => {
   showConfirmDialog({
@@ -560,6 +586,15 @@ onMounted(() => {
 .balance-amount {
   font-size: 28px;
   font-weight: bold;
+}
+
+.quick-actions {
+  padding: 12px 16px;
+  background: white;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
 }
 
 .create-form {
