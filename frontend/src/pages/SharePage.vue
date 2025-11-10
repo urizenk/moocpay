@@ -99,10 +99,10 @@ const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0
 const transferData = ref(null);
 const isWechat = ref(false);
 
-// 生成分享链接
+// 生成分享链接 - 直接指向收款页面，避免中转
 const shareLink = computed(() => {
   if (!transferData.value) return '';
-  return `${window.location.origin}/transfer/${transferData.value.id}`;
+  return `${window.location.origin}/receive/${transferData.value.id}`;
 });
 
 // 检查是否在微信环境
