@@ -114,6 +114,18 @@ const fetchTransferInfo = async () => {
         createdAt: data.createdAt || data.createTime || new Date().toISOString(),
         updatedAt: data.updatedAt || data.receiveTime || null
       };
+      
+      // 设置页面标题和meta，用于微信分享（不需要SDK权限）
+      document.title = `${data.senderName}给你发了一个转账`;
+      
+      // 设置description meta标签
+      let metaDesc = document.querySelector('meta[name="description"]');
+      if (!metaDesc) {
+        metaDesc = document.createElement('meta');
+        metaDesc.name = 'description';
+        document.head.appendChild(metaDesc);
+      }
+      metaDesc.content = `${data.senderName}向你转账${data.displayName}`;
     } else {
       showToast('转账信息不存在');
       setTimeout(() => {
