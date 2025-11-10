@@ -24,7 +24,8 @@
             name="displayName"
             label="展示金额（元）"
             placeholder="请输入展示金额"
-            type="digit"
+            type="number"
+            step="0.01"
             :rules="[{ required: true, message: '请填写展示金额' }]"
           />
           <van-field
@@ -32,7 +33,8 @@
             name="actualAmount"
             label="实际金额（元）"
             placeholder="请输入实际金额"
-            type="digit"
+            type="number"
+            step="0.01"
             :rules="[{ required: true, message: '请填写实际金额' }]"
           />
           <van-field
@@ -162,13 +164,15 @@
           v-model="editForm.displayName"
           label="展示金额（元）"
           placeholder="请输入展示金额"
-          type="digit"
+          type="number"
+          step="0.01"
         />
         <van-field
           v-model="editForm.actualAmount"
           label="实际金额（元）"
           placeholder="请输入实际金额"
-          type="digit"
+          type="number"
+          step="0.01"
         />
         <van-field
           v-model="editForm.message"
@@ -320,9 +324,16 @@ const createTransfer = async () => {
         theme: 'classic'
       };
       
-      records.value = [];
-      finished.value = false;
-      await loadRecords();
+      // 将新记录添加到列表顶部
+      const newRecord = response.data.data || response.data;
+      if (newRecord && newRecord.id) {
+        records.value.unshift(newRecord);
+      } else {
+        // 如果没有返回数据，重新加载列表
+        records.value = [];
+        finished.value = false;
+        await loadRecords();
+      }
     } else {
       showToast('创建失败');
     }
