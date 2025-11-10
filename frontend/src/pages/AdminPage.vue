@@ -89,14 +89,6 @@
     <div class="records-section">
       <div class="section-title">| 我的转账记录（共{{ records.length }}条）</div>
       
-      <!-- 调试信息 -->
-      <div v-if="records.length === 0" style="padding: 20px; text-align: center; color: #999;">
-        <div>🔍 调试信息</div>
-        <div>records数组长度: {{ records.length }}</div>
-        <div>loading: {{ loading }}</div>
-        <div>finished: {{ finished }}</div>
-      </div>
-      
       <!-- 直接渲染，不使用van-list -->
       <div class="records-container">
         <div class="record-item" v-for="item in records" :key="item.id">
@@ -566,8 +558,10 @@ const editAvatar = () => {
   showToast('头像上传功能开发中...');
 };
 
-onMounted(() => {
-  loadRecords();
+onMounted(async () => {
+  console.log('AdminPage mounted, 开始加载数据...');
+  await loadRecords();
+  console.log('数据加载完成，records长度:', records.value.length);
 });
 </script>
 
