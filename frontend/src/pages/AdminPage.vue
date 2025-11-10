@@ -349,15 +349,30 @@ const createTransfer = async () => {
 // 加载转账记录
 const loadRecords = async () => {
   try {
+    console.log('开始加载转账记录...');
     const response = await axios.get('/api/transfers');
+    console.log('API响应:', response.data);
     
     const data = response.data?.data || response.data;
+    console.log('解析后的data:', data);
     
+    // 处理返回的数据结构
+    let transferList = [];
     if (Array.isArray(data)) {
-      records.value = data.sort((a, b) => {
-        return new Date(b.createdAt) - new Date(a.createdAt);
-      });
+      transferList = data;
+    } else if (data && Array.isArray(data.list)) {
+      transferList = data.list;
+    } else {
+      console.warn('未识别的数据格式:', data);
     }
+    
+    console.log('转账列表:', transferList);
+    
+    records.value = transferList.sort((a, b) => {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+    
+    console.log('最终records.value:', records.value);
     
     loading.value = false;
     finished.value = true;
