@@ -13,14 +13,8 @@
         <div class="preview-title">分享预览</div>
         <div class="transfer-message-card" ref="messageCard">
           <div class="message-bubble">
-            <div class="amount-section">
-              <div class="amount-label">¥</div>
-              <div class="amount-value">{{ getAmount() }}</div>
-            </div>
-            <div class="action-button">
-              <div class="action-text">请收款</div>
-              <div class="action-arrow">→</div>
-            </div>
+            <div class="amount-value">¥ {{ getAmount() }}</div>
+            <div class="action-text">请收款</div>
           </div>
         </div>
       </div>
@@ -221,58 +215,24 @@ onMounted(() => {
 .message-bubble {
   background: linear-gradient(135deg, #f8ba4d 0%, #ec8539 100%);
   border-radius: 8px;
-  padding: 0;
+  padding: 40px 30px;
+  text-align: center;
   overflow: hidden;
   box-shadow: 0 2px 12px rgba(0,0,0,0.15);
 }
 
-/* 金额区域 */
-.amount-section {
-  padding: 35px 20px 25px;
-  text-align: center;
-  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%);
-}
-
-.amount-label {
-  font-size: 28px;
-  color: #fff;
-  font-weight: 300;
-  margin-bottom: 8px;
-  opacity: 0.95;
-}
-
 .amount-value {
-  font-size: 52px;
+  font-size: 48px;
   color: #fff;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -1px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.15);
-}
-
-/* 收款按钮 */
-.action-button {
-  background: rgba(255,255,255,0.95);
-  margin: 25px 30px 35px;
-  padding: 15px 20px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  cursor: pointer;
+  font-weight: 400;
+  line-height: 1.2;
+  margin-bottom: 20px;
 }
 
 .action-text {
-  font-size: 17px;
-  color: #333;
-  font-weight: 500;
-}
-
-.action-arrow {
-  font-size: 20px;
-  color: #999;
-  font-weight: 300;
+  font-size: 16px;
+  color: rgba(255,255,255,0.9);
+  font-weight: 400;
 }
 
 .actions {
