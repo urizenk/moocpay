@@ -73,6 +73,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { showToast, showLoadingToast, closeToast } from 'vant';
 import axios from 'axios';
 import { getWechatOpenId, isWechatBrowser } from '@/utils/wechatAuth';
+import { initWechatSDK, setWechatShare } from '@/utils/wechat';
 
 const router = useRouter();
 const route = useRoute();
@@ -165,6 +166,18 @@ const fetchTransferInfo = async () => {
       console.log('标题:', shareTitle);
       console.log('描述:', shareDesc);
       console.log('图片:', shareImage);
+      
+      // 如果在微信中，使用JSSDK配置分享（认证公众号）
+      if (isWechatBrowser()) {
+        try {
+          await initWechatSDK();
+          const shareLink = `${window.location.origin}/receive/${data.id}?t=${Date.now()}`;
+          setWechatShare(shareTitle, shareDesc, shareLink, shareImage);
+          console.log('✅ 微信JSSDK分享已配置');
+        } catch (error) {
+          console.error('配置微信JSSDK失败:', error);
+        }
+      }
     } else {
       showToast('转账信息不存在');
       setTimeout(() => {

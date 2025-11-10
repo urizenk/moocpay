@@ -483,22 +483,30 @@ const saveEdit = async () => {
   }
 };
 
-// 分享记录 - 直接分享收款页面
+// 分享记录 - 使用"口令+链接"方式
 const shareRecord = (item) => {
   // ⚠️ 添加时间戳参数，绕过微信缓存
   const timestamp = Date.now();
   const shareUrl = `${window.location.origin}/receive/${item.id}?t=${timestamp}`;
   
+  // 生成分享口令
+  const shareText = `💰 ${item.senderName}给你发了一个转账\n💵 金额：${item.displayName}\n📝 ${item.message || '恭喜发财，大吉大利'}\n\n👉 点击链接领取：\n${shareUrl}`;
+  
   showDialog({
-    title: '分享链接',
-    message: `链接已生成，点击"复制"按钮复制链接后，在微信中发送给好友。\n\n${shareUrl}`,
+    title: '分享内容',
+    message: `已生成分享内容（包含链接），点击"复制"后粘贴到微信发送。\n\n${shareText}`,
     showCancelButton: true,
-    confirmButtonText: '复制链接',
+    confirmButtonText: '复制内容',
     cancelButtonText: '取消'
   }).then(() => {
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      showToast('已复制到剪贴板');
+    navigator.clipboard.writeText(shareText).then(() => {
+      showToast({
+        message: '分享内容已复制',
+        icon: 'success',
+        duration: 2000
+      });
       
+      // 如果在微信中，跳转到分享预览页
       if (/micromessenger/i.test(navigator.userAgent)) {
         router.push(`/share/${item.id}?t=${timestamp}`);
       }

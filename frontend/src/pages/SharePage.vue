@@ -109,6 +109,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { showToast } from 'vant';
 import axios from 'axios';
+import { initWechatSDK, setWechatShare } from '@/utils/wechat';
 
 const route = useRoute();
 const router = useRouter();
@@ -153,6 +154,28 @@ const setupShareMeta = () => {
   console.log('分享描述:', metaDesc.content);
 };
 
+// 配置微信分享（使用JSSDK）
+const setupWechatShare = async () => {
+  if (!transferData.value || !isWechat.value) return;
+  
+  try {
+    // 初始化微信SDK
+    await initWechatSDK();
+    
+    // 设置分享内容
+    const shareTitle = `${transferData.value.senderName}给你发了一个转账`;
+    const shareDesc = `向你转账${transferData.value.displayName}`;
+    const shareLink = `${window.location.origin}/receive/${transferData.value.id}?t=${shareTimestamp}`;
+    const shareImg = 'https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico';
+    
+    setWechatShare(shareTitle, shareDesc, shareLink, shareImg);
+    
+    console.log('✅ 微信JSSDK分享已配置');
+  } catch (error) {
+    console.error('配置微信分享失败:', error);
+  }
+};
+
 // 获取转账信息
 const fetchTransferInfo = async () => {
   try {
@@ -165,8 +188,13 @@ const fetchTransferInfo = async () => {
     if (isSuccess && data) {
       transferData.value = data;
       
-      // 设置分享meta标签（无需SDK权限，所有公众号都支持）
+      // 设置分享meta标签（作为后备方案）
       setupShareMeta();
+      
+      // 如果在微信中，使用JSSDK配置分享
+      if (isWechat.value) {
+        setupWechatShare();
+      }
     } else {
       showToast('转账信息不存在');
       setTimeout(() => {
@@ -179,13 +207,17 @@ const fetchTransferInfo = async () => {
   }
 };
 
-// 复制链接
+// 复制链接（改为复制"口令+链接"）
 const copyLink = async () => {
   try {
-    await navigator.clipboard.writeText(shareLink.value);
+    // 生成分享口令
+    const shareText = `💰 ${transferData.value.senderName}给你发了一个转账\n💵 金额：${transferData.value.displayName}\n📝 ${transferData.value.message || '恭喜发财，大吉大利'}\n\n👉 点击链接领取：\n${shareLink.value}`;
+    
+    await navigator.clipboard.writeText(shareText);
     showToast({
-      message: '链接已复制',
-      icon: 'success'
+      message: '分享内容已复制',
+      icon: 'success',
+      duration: 2000
     });
   } catch (error) {
     console.error('复制失败:', error);
