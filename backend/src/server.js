@@ -86,21 +86,7 @@ async function initDefaultSettings() {
   }
 }
 
-// 启动服务器
-async function startServer() {
-  try {
-    // 初始化数据目录和设置
-    await initDefaultSettings();
-
-    // 启动服务器
-    app.listen(PORT, () => {
-      console.log(`服务器运行在 http://localhost:${PORT}`);
-    });
-  } catch (error) {
-    console.error('启动服务器失败:', error);
-  }
-}
-
+// ========== 重要：动态meta标签路由必须在静态文件服务之后，startServer之前 ==========
 // 处理分享页面的动态meta标签（微信分享专用）
 app.get('/receive/:id', async (req, res) => {
   try {
@@ -215,6 +201,21 @@ app.get('/share/:id', async (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
 });
+
+// 启动服务器
+async function startServer() {
+  try {
+    // 初始化数据目录和设置
+    await initDefaultSettings();
+
+    // 启动服务器
+    app.listen(PORT, () => {
+      console.log(`服务器运行在 http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error('启动服务器失败:', error);
+  }
+}
 
 startServer();
 
