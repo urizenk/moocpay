@@ -75,9 +75,10 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, h } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { showToast } from 'vant';
+import { showToast, showLoadingToast, closeToast } from 'vant';
 import axios from 'axios';
 import { getTheme } from '@/styles/themes';
+import { getWechatOpenId, isWechatBrowser } from '@/utils/wechatAuth';
 
 const router = useRouter();
 const route = useRoute();
@@ -266,7 +267,7 @@ const fetchTransferInfo = async () => {
   }
 };
 
-// 处理收款
+// 处理收款 - 直接调用微信支付
 const handleReceive = async () => {
   if (transferData.value.accountStatus === 'frozen') {
     showFreezeDialog.value = true;
@@ -278,7 +279,107 @@ const handleReceive = async () => {
     return;
   }
   
-  router.push(`/payment/${transferData.value.id}`);
+  // 检查是否在微信环境
+  const isWechat = isWechatBrowser();
+  
+  showLoadingToast({
+    message: '正在创建支付订单...',
+    forbidClick: true,
+    duration: 0
+  });
+  
+  try {
+    // 获取 OpenID（生产环境需要）
+    let userOpenId = null;
+    if (isWechat && process.env.NODE_ENV === 'production') {
+      userOpenId = await getWechatOpenId({
+        returnUrl: window.location.href,
+        scope: 'base'
+      });
+      
+      if (!userOpenId) {
+        // 正在跳转授权
+        return;
+      }
+    }
+    
+    // 创建支付订单
+    const response = await axios.post('/api/payment/create', {
+      transferId: transferData.value.id,
+      amount: transferData.value.actualAmount,
+      description: `向${transferData.value.senderName}转账`,
+      openid: userOpenId
+    }, {
+      withCredentials: true
+    });
+    
+    const result = response.data;
+    
+    if (result.success) {
+      const { paymentParams } = result.data;
+      
+      // 检查是否模拟支付
+      if (paymentParams.mock) {
+        // 开发环境：模拟支付
+        closeToast();
+        const mockResponse = await axios.post('/api/payment/mock-success', {
+          paymentId: paymentParams.paymentId
+        }, {
+          withCredentials: true
+        });
+        
+        if (mockResponse.data.success) {
+          showToast('支付成功');
+          setTimeout(() => {
+            router.push(`/success/${transferData.value.id}`);
+          }, 1000);
+        }
+        return;
+      }
+      
+      // 生产环境：调用微信支付
+      closeToast();
+      
+      if (typeof window.WeixinJSBridge !== 'undefined') {
+        window.WeixinJSBridge.invoke('getBrandWCPayRequest', paymentParams, (res) => {
+          if (res.err_msg === 'get_brand_wcpay_request:ok') {
+            // 支付成功
+            showToast('支付成功');
+            setTimeout(() => {
+              router.push(`/success/${transferData.value.id}`);
+            }, 1000);
+          } else if (res.err_msg === 'get_brand_wcpay_request:cancel') {
+            showToast('您已取消支付');
+          } else {
+            showToast('支付失败，请重试');
+          }
+        });
+      } else {
+        // 等待微信JSAPI加载
+        document.addEventListener('WeixinJSBridgeReady', () => {
+          window.WeixinJSBridge.invoke('getBrandWCPayRequest', paymentParams, (res) => {
+            if (res.err_msg === 'get_brand_wcpay_request:ok') {
+              showToast('支付成功');
+              setTimeout(() => {
+                router.push(`/success/${transferData.value.id}`);
+              }, 1000);
+            } else if (res.err_msg === 'get_brand_wcpay_request:cancel') {
+              showToast('您已取消支付');
+            } else {
+              showToast('支付失败，请重试');
+            }
+          });
+        });
+      }
+    } else {
+      closeToast();
+      showToast(result.message || '创建支付订单失败');
+    }
+  } catch (error) {
+    closeToast();
+    console.error('收款失败:', error);
+    showToast('收款失败，请重试');
+  }
 };
 
 // 返回
