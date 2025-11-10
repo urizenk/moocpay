@@ -1,105 +1,159 @@
-const fs = require('fs').promises;
-const path = require('path');
+const db = require('../config/database');
 const { v4: uuidv4 } = require('uuid');
 
-// 数据存储路径
-const dataDir = path.join(__dirname, '../../data');
-const transfersFile = path.join(dataDir, 'transfers.json');
-
-// 确保数据目录存在
-async function ensureDataDir() {
-  try {
-    await fs.access(dataDir);
-  } catch (error) {
-    await fs.mkdir(dataDir, { recursive: true });
+class Transfer {
+  // 初始化表
+  static async initTable() {
+    const createTableSQL = `
+      CREATE TABLE IF NOT EXISTS transfers (
+        id VARCHAR(36) PRIMARY KEY,
+        displayName VARCHAR(100) NOT NULL,
+        actualAmount DECIMAL(10, 2) NOT NULL,
+        senderName VARCHAR(100) NOT NULL,
+        senderAvatar VARCHAR(500),
+        message TEXT,
+        status VARCHAR(20) DEFAULT 'pending',
+        accountStatus VARCHAR(20) DEFAULT 'available',
+        theme VARCHAR(50) DEFAULT 'classic',
+        receiverOpenId VARCHAR(100),
+        paymentId VARCHAR(100),
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        receivedAt TIMESTAMP NULL,
+        INDEX idx_status (status),
+        INDEX idx_createdAt (createdAt)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `;
+    
+    try {
+      await db.query(createTableSQL);
+      console.log('✅ transfers表初始化成功');
+    } catch (error) {
+      console.error('❌ transfers表初始化失败:', error);
+      throw error;
+    }
   }
-}
 
-// 读取转账记录
-async function readTransfers() {
-  await ensureDataDir();
-  try {
-    const data = await fs.readFile(transfersFile, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    return [];
-  }
-}
-
-// 保存转账记录
-async function saveTransfers(transfers) {
-  await ensureDataDir();
-  await fs.writeFile(transfersFile, JSON.stringify(transfers, null, 2));
-}
-
-const Transfer = {
   // 创建转账记录
-  create: async (data) => {
-    const transfers = await readTransfers();
-    const newTransfer = {
-      id: uuidv4(),
-      displayName: data.displayName || '100.00元',
-      actualAmount: data.actualAmount || 0.1,
-      senderName: data.senderName || '张三',
-      senderAvatar: data.senderAvatar || 'https://via.placeholder.com/50x50?text=张三',
-      message: data.message || '恭喜发财，大吉大利',
-      status: data.status || 'pending', // pending: 待收款, received: 已收款, expired: 已过期
-      accountStatus: data.accountStatus || 'available', // available: 可用, frozen: 冻结
-      theme: data.theme || 'classic', // classic: 经典转账, redpacket: 红包, business: 企业, payment: 收款码, wallet: 零钱通, reward: 活动奖励
-      receiverOpenId: data.receiverOpenId || null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+  static async create(data) {
+    const id = uuidv4();
+    const {
+      displayName,
+      actualAmount,
+      senderName,
+      senderAvatar = '/default-avatar.png',
+      message = '',
+      status = 'pending',
+      accountStatus = 'available',
+      theme = 'classic',
+      receiverOpenId = null
+    } = data;
 
-    transfers.push(newTransfer);
-    await saveTransfers(transfers);
+    const sql = `
+      INSERT INTO transfers 
+      (id, displayName, actualAmount, senderName, senderAvatar, message, status, accountStatus, theme, receiverOpenId)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
-    return newTransfer;
-  },
+    try {
+      await db.query(sql, [
+        id,
+        displayName,
+        actualAmount,
+        senderName,
+        senderAvatar,
+        message,
+        status,
+        accountStatus,
+        theme,
+        receiverOpenId
+      ]);
+
+      return await this.getById(id);
+    } catch (error) {
+      console.error('创建转账记录失败:', error);
+      throw error;
+    }
+  }
 
   // 根据ID获取转账记录
-  getById: async (id) => {
-    const transfers = await readTransfers();
-    return transfers.find(t => t.id === id) || null;
-  },
+  static async getById(id) {
+    const sql = 'SELECT * FROM transfers WHERE id = ?';
+    
+    try {
+      const [rows] = await db.query(sql, [id]);
+      return rows[0] || null;
+    } catch (error) {
+      console.error('获取转账记录失败:', error);
+      throw error;
+    }
+  }
 
   // 更新转账记录
-  update: async (id, data) => {
-    const transfers = await readTransfers();
-    const index = transfers.findIndex(t => t.id === id);
+  static async update(id, data) {
+    const allowedFields = [
+      'displayName',
+      'actualAmount',
+      'message',
+      'status',
+      'accountStatus',
+      'theme',
+      'receiverOpenId',
+      'paymentId',
+      'receivedAt'
+    ];
 
-    if (index === -1) {
-      return null;
+    const updates = [];
+    const values = [];
+
+    Object.keys(data).forEach(key => {
+      if (allowedFields.includes(key)) {
+        updates.push(`${key} = ?`);
+        values.push(data[key]);
+      }
+    });
+
+    if (updates.length === 0) {
+      return await this.getById(id);
     }
 
-    transfers[index] = {
-      ...transfers[index],
-      ...data,
-      updatedAt: new Date().toISOString()
-    };
+    values.push(id);
+    const sql = `UPDATE transfers SET ${updates.join(', ')} WHERE id = ?`;
 
-    await saveTransfers(transfers);
-    return transfers[index];
-  },
-
-  // 删除转账记录
-  delete: async (id) => {
-    const transfers = await readTransfers();
-    const index = transfers.findIndex(t => t.id === id);
-
-    if (index === -1) {
-      return false;
+    try {
+      await db.query(sql, values);
+      return await this.getById(id);
+    } catch (error) {
+      console.error('更新转账记录失败:', error);
+      throw error;
     }
-
-    transfers.splice(index, 1);
-    await saveTransfers(transfers);
-    return true;
-  },
+  }
 
   // 获取所有转账记录
-  getAll: async () => {
-    return await readTransfers();
+  static async getAll() {
+    const sql = 'SELECT * FROM transfers ORDER BY createdAt DESC';
+    
+    try {
+      const [rows] = await db.query(sql);
+      return rows;
+    } catch (error) {
+      console.error('获取所有转账记录失败:', error);
+      throw error;
+    }
   }
-};
+
+  // 删除转账记录
+  static async delete(id) {
+    const sql = 'DELETE FROM transfers WHERE id = ?';
+    
+    try {
+      const [result] = await db.query(sql, [id]);
+      return result.affectedRows > 0;
+    } catch (error) {
+      console.error('删除转账记录失败:', error);
+      throw error;
+    }
+  }
+}
 
 module.exports = Transfer;
