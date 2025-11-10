@@ -340,6 +340,8 @@ onUnmounted(() => {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   position: relative;
   overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   transition: background-color 0.3s;
 }
 
@@ -408,6 +410,396 @@ onUnmounted(() => {
 }
 
 /* 主内容区域 */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 80px;
+  padding-bottom: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.icon-wrapper {
+  margin-bottom: 28px;
+}
+
+.main-icon {
+  width: 80px;
+  height: 80px;
+  background-color: var(--theme-card-bg);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  font-size: 48px;
+  transition: all 0.3s;
+}
+
+/* 红包主题图标样式 */
+.icon-redpacket {
+  background: linear-gradient(135deg, #ff6b6b 0%, #f43f3b 100%);
+  box-shadow: 0 4px 16px rgba(244, 63, 59, 0.3);
+  font-size: 52px;
+  animation: redpacketShake 2s infinite;
+}
+
+@keyframes redpacketShake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+/* 企业主题图标样式 */
+.icon-business {
+  background: linear-gradient(135deg, #4a9ff5 0%, #2b7bd6 100%);
+  box-shadow: 0 4px 12px rgba(43, 123, 214, 0.25);
+  font-size: 44px;
+}
+
+/* 收款码主题图标样式 */
+.icon-payment {
+  background: linear-gradient(135deg, #2aae67 0%, #07c160 100%);
+  box-shadow: 0 4px 12px rgba(7, 193, 96, 0.25);
+  font-size: 44px;
+}
+
+/* 零钱通主题图标样式 */
+.icon-wallet {
+  background: linear-gradient(135deg, #b987d4 0%, #9b59b6 100%);
+  box-shadow: 0 4px 12px rgba(155, 89, 182, 0.25);
+  font-size: 44px;
+}
+
+/* 奖励主题图标样式 */
+.icon-reward {
+  background: linear-gradient(135deg, #ffd700 0%, #d4a574 100%);
+  box-shadow: 0 4px 16px rgba(212, 165, 116, 0.3);
+  font-size: 44px;
+  animation: rewardPulse 2s infinite;
+}
+
+@keyframes rewardPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.status-text {
+  font-size: 16px;
+  color: var(--theme-text-secondary);
+  margin-bottom: 32px;
+  letter-spacing: 0.5px;
+  transition: color 0.3s;
+}
+
+/* 红包主题状态文字样式 */
+.status-redpacket {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--theme-text);
+}
+
+.amount-wrapper {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 48px;
+}
+
+.currency-symbol {
+  font-size: 32px;
+  color: var(--theme-text);
+  font-weight: 400;
+  margin-right: 4px;
+  line-height: 1;
+  transition: color 0.3s;
+}
+
+.amount-number {
+  font-size: 56px;
+  color: var(--theme-text);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -1px;
+  transition: color 0.3s;
+}
+
+.time-row {
+  font-size: 14px;
+  color: var(--theme-text-secondary);
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  transition: color 0.3s;
+}
+
+/* 红包祝福语 */
+.redpacket-wish {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #c07850;
+  letter-spacing: 2px;
+  font-weight: 500;
+}
+
+/* 底部区域 */
+.bottom-section {
+  padding: 0 24px 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.receive-btn {
+  width: 100%;
+  height: 50px;
+  background: var(--theme-gradient);
+  border: none;
+  border-radius: var(--theme-button-radius);
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: var(--theme-shadow);
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 红包主题按钮特殊样式 */
+[data-theme="redpacket"] .receive-btn {
+  border-radius: 25px;
+  height: 54px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 4px;
+}
+
+/* 企业主题按钮特殊样式 */
+[data-theme="business"] .receive-btn {
+  border-radius: 6px;
+  letter-spacing: 2px;
+}
+
+/* 奖励主题按钮特殊样式 */
+[data-theme="reward"] .receive-btn {
+  border-radius: 12px;
+  font-weight: 600;
+  box-shadow: 0 6px 20px rgba(212, 165, 116, 0.4);
+}
+
+.receive-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.receive-btn.frozen,
+.receive-btn:disabled {
+  background: #c8c9cc;
+  box-shadow: none;
+  cursor: not-allowed;
+  color: #ffffff;
+  transform: none;
+}
+
+.tips-row {
+  text-align: center;
+  font-size: 12px;
+  color: var(--theme-text-secondary);
+  letter-spacing: 0.3px;
+  transition: color 0.3s;
+}
+
+/* 冻结提示弹窗 */
+.freeze-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dialog-content {
+  width: 280px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  animation: scaleIn 0.2s;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.dialog-title {
+  padding: 24px 24px 8px;
+  font-size: 17px;
+  font-weight: 500;
+  color: #000000;
+  text-align: center;
+}
+
+.dialog-message {
+  padding: 8px 24px 24px;
+  font-size: 14px;
+  color: #888888;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.dialog-btn {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid #e5e5e5;
+  font-size: 17px;
+  color: var(--theme-primary);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.dialog-btn:active {
+  background-color: #f5f5f5;
+}
+
+/* 响应式调整 */
+@media (max-width: 375px) {
+  .amount-number {
+    font-size: 48px;
+  }
+  
+  .currency-symbol {
+    font-size: 28px;
+  }
+  
+  .main-icon {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .main-content {
+    padding-top: 60px;
+  }
+  
+  .receive-btn {
+    height: 46px;
+    font-size: 16px;
+  }
+  
+  [data-theme="redpacket"] .receive-btn {
+    height: 50px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 320px) {
+  .amount-number {
+    font-size: 42px;
+  }
+  
+  .currency-symbol {
+    font-size: 24px;
+  }
+  
+  .status-text {
+    font-size: 14px;
+  }
+  
+  .receive-btn {
+    height: 44px;
+    font-size: 15px;
+  }
+  
+  .bottom-section {
+    padding: 0 16px 24px;
+  }
+}
+
+@media (min-width: 414px) {
+  .amount-number {
+    font-size: 64px;
+  }
+  
+  .currency-symbol {
+    font-size: 36px;
+  }
+  
+  .receive-btn {
+    height: 54px;
+    font-size: 18px;
+  }
+  
+  [data-theme="redpacket"] .receive-btn {
+    height: 58px;
+    font-size: 22px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .main-content {
+    padding-top: 30px;
+    padding-bottom: 20px;
+  }
+  
+  .icon-wrapper {
+    margin-bottom: 16px;
+  }
+  
+  .status-text {
+    margin-bottom: 20px;
+  }
+  
+  .amount-wrapper {
+    margin-bottom: 30px;
+  }
+  
+  .main-icon {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+@media (min-width: 768px) {
+  .wechat-receive-page {
+    max-width: 414px;
+    margin: 0 auto;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+  }
+}
+
+@supports (padding: max(0px)) {
+  .header-bar {
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+  
+  .bottom-section {
+    padding-bottom: max(32px, env(safe-area-inset-bottom));
+  }
+}
+</style>
+
 .main-content {
   flex: 1;
   display: flex;

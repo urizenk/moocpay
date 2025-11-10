@@ -204,8 +204,9 @@ export default {
   min-height: 100vh;
   min-height: -webkit-fill-available;
   background-color: #f5f5f5;
-  position: relative;
   overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .success-header {
@@ -515,4 +516,59 @@ export default {
   touch-action: manipulation;
   min-height: 44px;
 }
-</style>
+</style>  color: #888;
+}
+
+.detail-row .value {
+  color: #333;
+}
+
+.detail-row .value.orange {
+  color: #ff6034;
+}
+
+.coin-icon {
+  font-size: 16px;
+}
+
+.transfer-details {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 30px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  text-align: left;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.detail-item:last-child {
+  margin-bottom: 0;
+}
+
+.detail-label {
+  font-size: 14px;
+  color: #888;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: #333;
+  text-align: right;
+  max-width: 60%;
+  word-break: break-all;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.action-button {
+  margin-bottom: 0;
+}

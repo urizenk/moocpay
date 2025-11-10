@@ -218,3 +218,35 @@ const viewDemo = () => {
   color: rgba(255, 255, 255, 0.5);
 }
 </style>
+
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.secondary-btn:active {
+  transform: scale(0.98);
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.btn-icon {
+  margin-right: 8px;
+  font-size: 20px;
+}
+
+.footer-section {
+  text-align: center;
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+.disclaimer {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.version {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+</style>

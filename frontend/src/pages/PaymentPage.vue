@@ -320,8 +320,9 @@ export default {
   min-height: 100vh;
   min-height: -webkit-fill-available;
   background-color: #f5f5f5;
-  position: relative;
   overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .payment-header {
@@ -566,4 +567,41 @@ export default {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
-</style>
+</style>}
+
+.payment-button:active {
+  transform: scale(0.98);
+}
+
+.payment-button:disabled {
+  background: #c8c9cc;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.payment-footer {
+  padding: 20px;
+  text-align: center;
+}
+
+.security-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #999;
+}
+
+.tip-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #ff6034;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 10px;
+}

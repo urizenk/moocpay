@@ -239,6 +239,8 @@ onMounted(() => {
   background-color: #f7f8fa;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .nav-bar {
@@ -492,3 +494,83 @@ onMounted(() => {
   }
 }
 </style>
+  font-size: 12px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.tip-text {
+  flex: 1;
+  font-size: 14px;
+  color: #646566;
+  line-height: 1.6;
+}
+
+/* 操作区域 */
+.action-section {
+  margin-bottom: 20px;
+}
+
+.wechat-notice {
+  background: linear-gradient(135deg, #fffbea 0%, #fff8dc 100%);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid #ffe58f;
+}
+
+.notice-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.notice-text {
+  flex: 1;
+  font-size: 14px;
+  color: #8c6d1f;
+  line-height: 1.6;
+}
+
+.copy-button {
+  background: linear-gradient(135deg, #ff9e5f 0%, #ff7243 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(255, 114, 67, 0.25);
+  margin-bottom: 12px;
+}
+
+.non-wechat-tip {
+  text-align: center;
+  font-size: 13px;
+  color: #969799;
+  line-height: 1.5;
+}
+
+/* 移动端适配 */
+@media (max-width: 375px) {
+  .share-content {
+    padding: 16px 12px;
+  }
+  
+  .amount-text {
+    font-size: 17px;
+  }
+  
+  .link-text {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 320px) {
+  .preview-card,
+  .tips-section {
+    padding: 12px;
+  }
+  
+  .tip-text {
+    font-size: 13px;
+  }
+}
+
+
