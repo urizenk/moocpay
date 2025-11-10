@@ -170,23 +170,24 @@ const setupWechatShare = () => {
   // 关键：微信分享的链接必须是收款页面，而不是分享页面！
   const receivePageUrl = `${window.location.origin}/receive/${transferData.value.id}`;
   
+  // 简洁的分享卡片文案（模仿微信转账）
   const shareData = {
-    title: '微信转账',
-    desc: `${transferData.value.senderName}向你转账${transferData.value.displayName}`,
-    link: receivePageUrl,  // 使用收款页面URL
-    imgUrl: transferData.value.senderAvatar || window.location.origin + '/logo.svg'
+    title: '微信转账模拟',  // 卡片标题
+    desc: `${transferData.value.senderName}向你转账${transferData.value.displayName}`,  // 卡片描述
+    link: receivePageUrl,  // 点击后跳转的链接
+    imgUrl: 'https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico'  // 微信图标
   };
   
   console.log('===== 微信分享配置 =====');
+  console.log('卡片标题:', shareData.title);
+  console.log('卡片描述:', shareData.desc);
   console.log('分享链接:', receivePageUrl);
-  console.log('分享数据:', shareData);
   
   // 分享给朋友（新版API）
   wx.updateAppMessageShareData({
     ...shareData,
     success: () => {
       console.log('✅ 分享配置成功（新版API）');
-      console.log('分享链接:', receivePageUrl);
     },
     fail: (err) => {
       console.error('❌ 分享配置失败（新版API）:', err);
